@@ -23,6 +23,23 @@ public:
 	int id;
 
 	Cell() {
+		/*	
+			0v1: taxa de liberação de Cálcio do Tx
+			1Y: 
+			2vin: o fluxo de calcio que parte do espaço extracelular, por meio da membrana do astrócito, até o interior do citosol
+			3VM2: o fluxo máximo de íons de cálcio fora da bomba (???)
+			4C: Concentração de Cálcio no citosol
+			5n: Coeficiente de Hill (2.02)
+			6K2: 
+			10kf: constante que determina a liberação de cálcio do RE para o citosol
+			22D: coneficiente de difusão
+			23l: volume da célula
+			24K: taxa máxima da ativação do receptor (Nakano, 2010; Eq. 3)
+			25ka: taxa máxima da ativação do receptor (2.5) (Nakano, 2010; Eq. 3)
+			26m: Coeficiente de Hill (2.2)
+			27phh - 29plh: probabilidades das gap junctions
+		*/
+
 		double v1 = 100; parameters["v1"] = v1;
 	    double Y = 0; parameters["Y"] = 0;
 	    double vin = 0.05; parameters["vin"] = 0.05;
