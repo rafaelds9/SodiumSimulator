@@ -2,14 +2,14 @@
 
 using namespace std;
 
-#define DIM_X 5  //Tamanho da malha na horizontal
-#define DIM_Y 5	 //Tamanho da malha na vertical
-#define DIM_Z 1  //Tamanho da malha na profundidade
-#define ALPHA 0.01 //Coeficiente do reservatório
+#define DIM_X 15
+#define DIM_Y 15
+#define DIM_Z 1
+#define ALPHA 0.01
 #define PI 3.14159265359
 
-double conc, tx_conc, diameter_cell = 5, deltaamp; //Só diameter_cell está sendo usado
-int destination = 2; //Não tá sendo usada (ctrl F)
+double conc, tx_conc, diameter_cell = 5, deltaamp;
+int destination = 2;
 
 // #### GAP JUNCTIONS PROBABILITIES FOR ASTROCYTES #### //
 double phl[50] = {3.33333333333e-01,9.51756626745e-02,2.71812917035e-02,7.76661124715e-03,2.22288659849e-03,6.39921679991e-04,1.87410416804e-04,5.81750667195e-05,2.17596143238e-05,1.1436923158e-05,7.88454209682e-06,7.43738619183e-06,7.37970057786e-06,7.29603316347e-06,7.27478942971e-06,7.26006289992e-06,7.26084787208e-06,7.26080132601e-06,7.26061054996e-06,7.26081361742e-06,7.26079620991e-06,7.26072365567e-06,7.26058079345e-06,7.26074725419e-06,7.26087576894e-06,7.26073008288e-06,7.26061194028e-06,7.26074336727e-06,7.26101528686e-06,7.26081974085e-06,7.26091667847e-06,7.26058059059e-06,7.26084014577e-06,7.2610063969e-06,7.26069065682e-06,7.26083092741e-06,7.26076153595e-06,7.26071756287e-06,7.26092535023e-06,7.26076421324e-06,7.26060026219e-06,7.26075209967e-06,7.26093367537e-06,7.26073986493e-06,7.26039032094e-06,7.26091299989e-06,7.26077756319e-06,7.26071491915e-06,7.2607710224e-06,7.26082337127e-06};
@@ -41,35 +41,35 @@ public:
 		*/
 
 		double v1 = 100; parameters["v1"] = v1;
-			double Y = 0; parameters["Y"] = 0;
-			double vin = 0.05; parameters["vin"] = 0.05;
-			double VM2 = 15; parameters["VM2"] = 15;
-			double C = 0.1; parameters["C"] = 0.1;
-			double n = 2.02; parameters["n"] = 2.02;
-			double K2 = 0.1; parameters["K2"] = 0.1;
-			double VM3 = 40; parameters["VM3"] = VM3; // Porque nao 40, como diz no artigo?
-			double ko = 0.5; parameters["ko"] = ko;
-			double ER = 1.5; parameters["ER"] = ER;
-			double kf = 0.5; parameters["kf"] = kf;
-			double kp = 0.3; parameters["kp"] = kp;
-			double kdeg = 0.08; parameters["kdeg"] = kdeg;
-			double vp = 0.05; parameters["vp"] = vp;
-			double kcaaa = 0.15; parameters["kcaaa"] = 0.15;
-			double kcai = 0.15; parameters["kcai"] = 0.15;
-			double kip3 = 0.1; parameters["kip3"] = 0.1;
-			double IP3 = 0.1; parameters["IP3"] = IP3;
-			double q = 4; parameters["q"] = q;
-			double W = 0; parameters["W"] = W;
-			double A = 0; parameters["A"] = A;
-			double kia = 0.5; parameters["kia"] = kia;
-			double D = 122500; parameters["D"] = D;
-			double l = PI * pow(diameter_cell / 2, 2); parameters["l"] = l;
-			double K = 0.0006; parameters["K"] = 0.0006;
-			double ka = 2.5; parameters["ka"] = ka;
-			double m = 2.2; parameters["m"] = m;
-			parameters["phl"] = phl[0];
-			parameters["plh"] = plh[0];
-			parameters["phh"] = phh[0];
+		double Y = 0; parameters["Y"] = 0;
+		double vin = 0.05; parameters["vin"] = 0.05;
+		double VM2 = 15; parameters["VM2"] = 15;
+		double C = 0.1; parameters["C"] = 0.1;
+		double n = 2.02; parameters["n"] = 2.02;
+		double K2 = 0.1; parameters["K2"] = 0.1;
+		double VM3 = 40; parameters["VM3"] = VM3; // Porque nao 40, como diz no artigo?
+		double ko = 0.5; parameters["ko"] = ko;
+		double ER = 1.5; parameters["ER"] = ER;
+		double kf = 0.5; parameters["kf"] = kf;
+		double kp = 0.3; parameters["kp"] = kp;
+		double kdeg = 0.08; parameters["kdeg"] = kdeg;
+		double vp = 0.05; parameters["vp"] = vp;
+		double kcaaa = 0.15; parameters["kcaaa"] = 0.15;
+		double kcai = 0.15; parameters["kcai"] = 0.15;
+		double kip3 = 0.1; parameters["kip3"] = 0.1;
+		double IP3 = 0.1; parameters["IP3"] = IP3;
+		double q = 4; parameters["q"] = q;
+		double W = 0; parameters["W"] = W;
+		double A = 0; parameters["A"] = A;
+		double kia = 0.5; parameters["kia"] = kia;
+		double D = 122500; parameters["D"] = D;
+		double l = PI * pow(diameter_cell / 2, 2); parameters["l"] = l;
+		double K = 0.0006; parameters["K"] = 0.0006;
+		double ka = 2.5; parameters["ka"] = ka;
+		double m = 2.2; parameters["m"] = m;
+		parameters["phl"] = phl[0];
+		parameters["plh"] = plh[0];
+		parameters["phh"] = phh[0];
 	}
 
 	void setId(int ID) {
@@ -81,38 +81,35 @@ public:
 class Network {
 public:
 	int NC; // Number of cells
-	Cell tecido[DIM_Y][DIM_X][DIM_Z]; //Cria um vetor de células
-	list<int> *connect; // Lsta de inteiros para as conexões
+	Cell tecido[DIM_Y][DIM_X][DIM_Z];
+	list<int> *connect;
 
 	Network() {
-		NC = DIM_X * DIM_Y * DIM_Z; //
-		connect = new list<int>[NC]; //Cria uma lista para as conexões
+		NC = DIM_X * DIM_Y * DIM_Z;
+		connect = new list<int>[NC];
 
 		int id_cont = 0;
-		//Define ID das células
-				for (int i = 0; i < DIM_X; i++) {
-					for (int j = 0; j < DIM_Y; j++) {
-						for (int k = 0; k < DIM_Z; k++) {
-							Cell celula;
-							celula.setId(id_cont);
-							tecido[j][i][k] = celula;
-							id_cont++;
-						}
-					}
+
+		for (int i = 0; i < DIM_X; i++) {
+			for (int j = 0; j < DIM_Y; j++) {
+				for (int k = 0; k < DIM_Z; k++) {
+					Cell celula;
+					celula.setId(id_cont);
+					tecido[j][i][k] = celula;
+					id_cont++;
 				}
+			}
+		}
 	}
 
-	//Método para determinar o Id de uma célula a partir das suas coordenadas
 	int getId(int x, int y, int z) {
 		return tecido[y][x][z].parameters["id"];
 	}
 
-	//Obtem parâmetro a partir das coordenadas
 	double get(int x, int y, int z, string parameter) {
 		return tecido[y][x][z].parameters[parameter];
 	}
 
-	//Obtem parâmetro a partir do Id
 	double get(int id, string parameter) {
 		int x = id % DIM_X;
 		int y = (id / DIM_X) % DIM_Y;
@@ -120,12 +117,10 @@ public:
 		return tecido[y][x][z].parameters[parameter];
 	}
 
-	//Atribui um valor a um certo parâmetro (com base no x,y,z)
 	void set(int x, int y, int z, string parameter, double value) {
 		tecido[y][x][z].parameters[parameter] = value;
 	}
 
-	//Obtem parâmetro a partir das coordenadas(com base no Id)
 	void set(int id, string parameter, double value) {
 		int x = id % DIM_X;
 		int y = (id / DIM_X) % DIM_Y;
@@ -133,12 +128,10 @@ public:
 		tecido[y][x][z].parameters[parameter] = value;
 	}
 
-	//Soma um valor a um parâmetro (coordenadas)
 	void accumulate(int x, int y, int z, string parameter, double add) {
 		tecido[y][x][z].parameters[parameter] += add;
 	}
 
-	//Soma um valor a um parâmetro (Id)
 	void accumulate(int id, string parameter, double add) {
 		int x = id % DIM_X;
 		int y = (id / DIM_X) % DIM_Y;
@@ -146,23 +139,20 @@ public:
 		tecido[y][x][z].parameters[parameter] += add;
 	}
 
-	//Inverte o sinal de um parâmetro
 	void changeSignal(int x, int y, int z, string parameter) {
 		tecido[y][x][z].parameters[parameter] *= -1;
 	}
 
-	// Método para imprimir o tecido
 	void printTissue() {
+		cout << endl;
 		for (int i = 0; i < DIM_Y; i++) {
 			for (int j = 0; j < DIM_X; j++) {
-				cout << get(j, i, trunc(DIM_Z / 2), "C") << " ";	//Aqui é imprimido o estado do tecido
+				cout << get(j, i, trunc(DIM_Z / 2), "C") << " ";
 			}
 			cout << endl;
 		}
 	}
 
-	// push_back funciona como um append
-	// Define a topologia da rede
 	void regularDegree() {
 		for (int x = 0; x < DIM_X; x++) {
 			for (int y = 0; y < DIM_Y; y++) {
@@ -203,7 +193,6 @@ public:
 					} else {
 						connect[getId(x, y, z)].push_back(-1);
 					}
-
 				}
 			}
 		}
@@ -214,9 +203,9 @@ public:
 		for (int v = 0; v < NC; v++) {
 			cout << "Célula " << v << ": ";
 			for (it = connect[v].begin(); it != connect[v].end(); it++){
-							cout << *it << " ";
-					}
-					cout << endl;
+				cout << *it << " ";
+			}
+			cout << endl;
 		}
 	}
 
@@ -225,23 +214,23 @@ public:
 		list<int>::iterator it;
 
 		for (it = connect[id].begin(); it != connect[id].end(); it++){
-						connections.push_back(*it);
-				}
+			connections.push_back(*it);
+		}
 
-				return connections;
+		return connections;
 	}
 };
 
 class Gillespie {
-public:
-	Network tecido;
+	Network *tecido;
 
+public:
 	Gillespie(Network *rede) {
-		tecido = *rede;
+		tecido = rede;
 
 		for (int i = 0; i < DIM_Y; i++) {
 			for (int j = 0; j < DIM_X; j++) {
-				cout << "(" << j << "," << i << ") " << tecido.get(j, i, trunc(DIM_Z / 2), "C") << " ";
+				cout << "(" << j << "," << i << ") " << tecido->get(j, i, trunc(DIM_Z / 2), "C") << " ";
 			}
 			cout << endl;
 		}
@@ -251,42 +240,42 @@ public:
 
 	// Reaction 1
 	double sigma0(int id) {
-		return tecido.get(id, "vin");
+		return tecido->get(id, "vin");
 	}
 
 	// Reaction 2
 	double sigma1(int id) {
-		return 4 * tecido.get(id, "VM3") * ((pow(tecido.get(id, "kcaaa"), tecido.get(id, "n")) * pow(tecido.get(id, "C"), tecido.get(id, "n")) ) / ((pow(tecido.get(id, "C"), tecido.get(id, "n")) + pow(tecido.get(id, "kcaaa"), tecido.get(id, "n"))) * (pow(tecido.get(id, "C"), tecido.get(id, "n")) + pow(tecido.get(id, "kcai"), tecido.get(id, "n"))) ) * (pow(tecido.get(id, "IP3"), tecido.get(id, "m")) / (pow(tecido.get(id, "kip3"), tecido.get(id, "m")) + pow(tecido.get(id, "IP3"), tecido.get(id, "m")) ) )) * (tecido.get(id, "ER") - tecido.get(id, "C"));
+		return 4 * tecido->get(id, "VM3") * ((pow(tecido->get(id, "kcaaa"), tecido->get(id, "n")) * pow(tecido->get(id, "C"), tecido->get(id, "n")) ) / ((pow(tecido->get(id, "C"), tecido->get(id, "n")) + pow(tecido->get(id, "kcaaa"), tecido->get(id, "n"))) * (pow(tecido->get(id, "C"), tecido->get(id, "n")) + pow(tecido->get(id, "kcai"), tecido->get(id, "n"))) ) * (pow(tecido->get(id, "IP3"), tecido->get(id, "m")) / (pow(tecido->get(id, "kip3"), tecido->get(id, "m")) + pow(tecido->get(id, "IP3"), tecido->get(id, "m")) ) )) * (tecido->get(id, "ER") - tecido->get(id, "C"));
 	}
 
 	// Reaction 3
 	double sigma2(int id) {
-		return tecido.get(id, "VM2") * ( pow(tecido.get(id, "C"), 2) / (pow(tecido.get(id, "K2"), 2) + pow(tecido.get(id, "C"), 2)) );
+		return tecido->get(id, "VM2") * ( pow(tecido->get(id, "C"), 2) / (pow(tecido->get(id, "K2"), 2) + pow(tecido->get(id, "C"), 2)) );
 	}
 
 	// Reaction 4
 	double kf_Ea(int id) {
-		return tecido.get(id, "kf") * tecido.get(id, "ER");
+		return tecido->get(id, "kf") * tecido->get(id, "ER");
 	}
 
 	// Reaction 5
 	double kf_Ca(int id) {
-		return tecido.get(id, "kf") * tecido.get(id, "C");
+		return tecido->get(id, "kf") * tecido->get(id, "C");
 	}
 
 	// Reaction 6
 	double ko_Ca(int id) {
-		return tecido.get(id, "ko") * tecido.get(id, "C");
+		return tecido->get(id, "ko") * tecido->get(id, "C");
 	}
 
 	// Reaction 7
 	double sigma3(int id) {
-		return tecido.get(id, "vp") * (pow(tecido.get(id, "C"), 2) / (pow(tecido.get(id, "C"), 2) + pow(tecido.get(id, "kp"), 2)) );
+		return tecido->get(id, "vp") * (pow(tecido->get(id, "C"), 2) / (pow(tecido->get(id, "C"), 2) + pow(tecido->get(id, "kp"), 2)) );
 	}
 
 	// Reaction 8
 	double kd_Ia(int id) {
-		return tecido.get(id, "kdeg") * tecido.get(id, "IP3");
+		return tecido->get(id, "kdeg") * tecido->get(id, "IP3");
 	}
 
 	// Reaction 9
@@ -294,12 +283,12 @@ public:
 		vector<double> diffusions(18);
 
 		vector<int> connections(6);
-		connections = tecido.getConnections(id); //Ver essa função
+		connections = tecido->getConnections(id);
 		double value;
 
 		for (int i = 0; i < connections.size(); i++){
-			for (int gj = 0; gj < 3; gj++) { //Por que < 3? Pois 1. Aberta-Fechada, 2.Fechada - Aberta e 3. Aberta e aberta
-				if (connections[i] != -1)			// desconsidera as duas estarem fechadas)
+			for (int gj = 0; gj < 3; gj++) {
+				if (connections[i] != -1)
 					value = diffusionEquation(id, connections[i], gj);
 				else
 					value = 0;
@@ -315,20 +304,17 @@ public:
 		//double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
 		double diff;
 
-		if (tecido.get(id1, "C") <= tecido.get(id2, "C")){
-			//cout << "ID1 - C: " << tecido.get(id1, "C") << ", ID2 - C: " << tecido.get(id2, "C") << endl;
+		if (tecido->get(id1, "C") <= tecido->get(id2, "C"))
 			return 0;
-		}
 
 		if (gap_junction == 0) {
-			diff = (tecido.get(id1, "D") / tecido.get(id1, "l")) * (tecido.get(id1, "C") - tecido.get(id2, "C")) * tecido.get(id1, "phh");
+			diff = (tecido->get(id1, "D") / tecido->get(id1, "l")) * (tecido->get(id1, "C") - tecido->get(id2, "C")) * tecido->get(id1, "phh");
 		} else if (gap_junction == 1) {
-			diff = (tecido.get(id1, "D") / tecido.get(id1, "l")) * (tecido.get(id1, "C") - tecido.get(id2, "C")) * tecido.get(id1, "phl");
+			diff = (tecido->get(id1, "D") / tecido->get(id1, "l")) * (tecido->get(id1, "C") - tecido->get(id2, "C")) * tecido->get(id1, "phl");
 		} else {
-			diff = (tecido.get(id1, "D") / tecido.get(id1, "l")) * (tecido.get(id1, "C") - tecido.get(id2, "C")) * tecido.get(id1, "plh");
+			diff = (tecido->get(id1, "D") / tecido->get(id1, "l")) * (tecido->get(id1, "C") - tecido->get(id2, "C")) * tecido->get(id1, "plh");
 		}
 
-		//cout << "ID1 - C: " << tecido.get(id1, "C") << ", ID2 - C: " << tecido.get(id2, "C") << endl;
 		return diff;
 	}
 
@@ -342,141 +328,153 @@ public:
 		double reactions[DIM_Y][DIM_X][DIM_Z][num_reactions + 17];
 
 		for (int i = 0; i < DIM_X; i++) {
-					for (int j = 0; j < DIM_Y; j++) {
+			for (int j = 0; j < DIM_Y; j++) {
 
-						for (int k = 0; k < DIM_Z; k++) {
-							// << Begin Reactions
-							for (int r = 0; r < num_reactions; r++) {
-								if (r == 0) {
-									reaction_value = sigma0(tecido.getId(i, j, k));
-									reactions[j][i][k][r] = reaction_value;
-								} else if (r == 1) {
-									reaction_value = sigma1(tecido.getId(i, j, k));
-									reactions[j][i][k][r] = reaction_value;
-								} else if (r == 2) {
-									reaction_value = sigma2(tecido.getId(i, j, k));
-									reactions[j][i][k][r] = reaction_value;
-								} else if (r == 3) {
-									reaction_value = kf_Ea(tecido.getId(i, j, k));
-									reactions[j][i][k][r] = reaction_value;
-								} else if (r == 4) {
-									reaction_value = kf_Ca(tecido.getId(i, j, k));
-									reactions[j][i][k][r] = reaction_value;
-								} else if (r == 5) {
-									reaction_value = ko_Ca(tecido.getId(i, j, k));
-									reactions[j][i][k][r] = reaction_value;
-								} else if (r == 6) {
-									reaction_value = sigma3(tecido.getId(i, j, k));
-									reactions[j][i][k][r] = reaction_value;
-								} else if (r == 7) {
-									reaction_value = kd_Ia(tecido.getId(i, j, k));
-									reactions[j][i][k][r] = reaction_value;
-								} else if (r == 8) {
-									diffusion = diffusions(tecido.getId(i, j, k)); //O erro tá por aqui,
-									for (int d = 0; d < diffusion.size(); d++) {
-										reaction_value = diffusion[d];
-										reactions[j][i][k][r + d] = reaction_value;
-										//cout<<i<<", "<<j<<", "<<k<<", "<<r+d << " : " << reaction_value<<endl; //Pode se ver aqui nesse cout
-										/*if (reaction_value >= max_reaction) {
-											max_reaction = reaction_value;
-											cell[0] = j; cell[1] = i; cell[2] = k;
+				for (int k = 0; k < DIM_Z; k++) {
+					// << Begin Reactions
+					for (int r = 0; r < num_reactions; r++) {
+						if (r == 0) {
+							reaction_value = sigma0(tecido->getId(i, j, k));
+							reactions[j][i][k][r] = reaction_value;
+						} else if (r == 1) {
+							reaction_value = sigma1(tecido->getId(i, j, k));
+							reactions[j][i][k][r] = reaction_value;
+						} else if (r == 2) {
+							reaction_value = sigma2(tecido->getId(i, j, k));
+							reactions[j][i][k][r] = reaction_value;
+						} else if (r == 3) {
+							reaction_value = kf_Ea(tecido->getId(i, j, k));
+							reactions[j][i][k][r] = reaction_value;
+						} else if (r == 4) {
+							reaction_value = kf_Ca(tecido->getId(i, j, k));
+							reactions[j][i][k][r] = reaction_value;
+						} else if (r == 5) {
+							reaction_value = ko_Ca(tecido->getId(i, j, k));
+							reactions[j][i][k][r] = reaction_value;
+						} else if (r == 6) {
+							reaction_value = sigma3(tecido->getId(i, j, k));
+							reactions[j][i][k][r] = reaction_value;
+						} else if (r == 7) {
+							reaction_value = kd_Ia(tecido->getId(i, j, k));
+							reactions[j][i][k][r] = reaction_value;
+						} else if (r == 8) {
+							diffusion = diffusions(tecido->getId(i, j, k));
+							for (int d = 0; d < diffusion.size(); d++) {
+								reaction_value = diffusion[d];
+								reactions[j][i][k][r + d] = reaction_value;
 
-											if (d >= 0 && d <= 2)
-												reaction_choice = 8;
-											else if (d >= 3 && d <= 5)
-												reaction_choice = 9;
-											else if (d >= 6 && d <= 8)
-												reaction_choice = 10;
-											else if (d >= 9 && d <= 11)
-												reaction_choice = 11;
-											else if (d >= 12 && d <= 14)
-												reaction_choice = 12;
-											else
-												reaction_choice = 13;
-										}*/
+								/*if (reaction_value >= max_reaction) {
+									max_reaction = reaction_value;
+									cell[0] = j; cell[1] = i; cell[2] = k;
 
-										alfa_0 += reaction_value;
-									}
-								}
+									if (d >= 0 && d <= 2)
+										reaction_choice = 8;
+									else if (d >= 3 && d <= 5)
+										reaction_choice = 9;
+									else if (d >= 6 && d <= 8)
+										reaction_choice = 10;
+									else if (d >= 9 && d <= 11)
+										reaction_choice = 11;
+									else if (d >= 12 && d <= 14)
+										reaction_choice = 12;
+									else
+										reaction_choice = 13;
+								}*/
 
-								if (r != 8) {
-									/*if (reaction_value >= max_reaction) {
-										max_reaction = reaction_value;
-										cell[0] = j; cell[1] = i; cell[2] = k;
-										reaction_choice = r;
-									}*/
-
-									alfa_0 += reaction_value;
-								}
+								alfa_0 += reaction_value;
 							}
-							// End Reactions >>
+						}
+
+						if (r != 8) {
+							/*if (reaction_value >= max_reaction) {
+								max_reaction = reaction_value;
+								cell[0] = j; cell[1] = i; cell[2] = k;
+								reaction_choice = r;
+							}*/
+
+							alfa_0 += reaction_value;
 						}
 					}
+					// End Reactions >>
 				}
+			}
+		}
 
-				// Gerando dois números aleatórios: r1 e r2
-				unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+
+		// for (int i = 0; i < DIM_X; i++) {
+		// 	for (int j = 0; j < DIM_Y; j++) {
+		// 		for (int k = 0; k < DIM_Z; k++) {
+		// 			cout << tecido->getId(i, j, k) << ": ";
+		// 			for (int r = 0; r < num_reactions; r++) {
+		// 				cout << reactions[i][j][k][r] << " ";
+		// 			}
+		// 			cout << endl;
+		// 		}
+		// 	}
+		// }
+
+
+		// Gerando dois números aleatórios: r1 e r2
+		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 		std::default_random_engine generator (seed);
 		std::uniform_real_distribution<double> distribution (0.0,1.0);
 
 		double r1 = distribution(generator);
 		double r2 = distribution(generator);
 
-
 		// Calculando o tempo tau
 		double tau = (1 / alfa_0) * log(1 / r1);
 
-				// Definindo a reação que será executada
-				double sum_upper = 0, sum_down = 0;
-				bool flag = false;
+		// Definindo a reação que será executada
+		double sum_upper = 0, sum_down = 0;
+		bool flag = false;
 
-				for (int i = 0; i < DIM_X; i++) {
-				for (int j = 0; j < DIM_Y; j++) {
-					for (int k = 0; k < DIM_Z; k++) {
-						for (int r = 0; r < num_reactions + 17; r++) {
-								sum_upper += reactions[j][i][k][r];
+		for (int i = 0; i < DIM_X; i++) {
+			for (int j = 0; j < DIM_Y; j++) {
+				for (int k = 0; k < DIM_Z; k++) {
+					for (int r = 0; r < num_reactions + 17; r++) {
+						sum_upper += reactions[j][i][k][r];
 
-								if (sum_upper >= alfa_0 * r2) {
-									//cout << i << " " << j << " " << k << " " << r << endl;
+						if (sum_upper >= alfa_0 * r2) {
+							//cout << i << " " << j << " " << k << " " << r << endl;
 
-									flag = false;
-									sum_down = 0;
-									for (int x = 0; x < DIM_X && flag == false; x++) {
-									for (int y = 0; y < DIM_Y && flag == false; y++) {
-										for (int z = 0; z < DIM_Z && flag == false; z++) {
-											for (int n = 0; n < num_reactions + 17 && flag == false; n++) {
-												if (x == i && y == j && z == k && n == r) {
-													//cout << x << " " << y << " " << z << " " << n << endl;
-													//cout << sum_down << " " << alfa_0 * r2 << " " << sum_upper << endl;
-													flag = true;
-												} else {
-													sum_down += reactions[y][x][z][n];
-												}
+							flag = false;
+							sum_down = 0;
+							for (int x = 0; x < DIM_X && flag == false; x++) {
+								for (int y = 0; y < DIM_Y && flag == false; y++) {
+									for (int z = 0; z < DIM_Z && flag == false; z++) {
+										for (int n = 0; n < num_reactions + 17 && flag == false; n++) {
+											if (x == i && y == j && z == k && n == r) {
+												//cout << x << " " << y << " " << z << " " << n << endl;
+												//cout << sum_down << " " << alfa_0 * r2 << " " << sum_upper << endl;
+												flag = true;
+											} else {
+												sum_down += reactions[y][x][z][n];
 											}
 										}
 									}
 								}
+							}
 
-								if (sum_down < alfa_0 * r2) {
-									//cout << sum_upper << " " << alfa_0 * r2 << " " << sum_down << endl;
-									retorno[0] = r + 1; // [1, 26]
-									retorno[1] = i;
-									retorno[2] = j;
-									retorno[3] = k;
-									retorno[4] = tau;
+							if (sum_down < alfa_0 * r2) {
+								//cout << sum_upper << " " << alfa_0 * r2 << " " << sum_down << endl;
+								retorno[0] = r + 1; // [1, 26]
+								retorno[1] = i;
+								retorno[2] = j;
+								retorno[3] = k;
+								retorno[4] = tau;
 
-									return retorno;
-								}
-								}
+								return retorno;
 							}
 						}
 					}
 				}
+			}
+		}
 	}
 };
 
 int main(){
-	system("cls");
 	Network tecido;
 	int tx_x = trunc(DIM_X / 2);
 	int tx_y = trunc(DIM_Y / 2);
@@ -490,8 +488,6 @@ int main(){
 
 	// Inicializando o Algoritmo de Gillespie
 	Gillespie gillespie(&tecido);
-
-	//cout << "Gillespie";
 
 	//return 0;
 	/*cout << tecido.getId(1, 0, 0) << endl;
@@ -515,6 +511,7 @@ int main(){
 
 		current_time += (choice[4] * 1000);
 		reaction = choice[0];
+
 		qtd_reactions[reaction - 1]++;
 
 		//cout << current_time << endl;
@@ -540,19 +537,18 @@ int main(){
 			// Update Gap Junctions
 			if (int_time < 50) {
 				for (int i = 0; i < DIM_X; i++) {
-						for (int j = 0; j < DIM_Y; j++) {
-							for (int k = 0; k < DIM_Z; k++) {
-								tecido.set(i, j, k, "phl", phl[int_time]);
-								tecido.set(i, j, k, "plh", plh[int_time]);
-								tecido.set(i, j, k, "phh", phh[int_time]);
-							}
+					for (int j = 0; j < DIM_Y; j++) {
+						for (int k = 0; k < DIM_Z; k++) {
+							tecido.set(i, j, k, "phl", phl[int_time]);
+							tecido.set(i, j, k, "plh", plh[int_time]);
+							tecido.set(i, j, k, "phh", phh[int_time]);
 						}
 					}
+				}
 			}
 		}
-		//cout <<"Reaction : "<<reaction<<endl;
 
-		/*if (reaction == 1) {
+		if (reaction == 1) {
 			tecido.accumulate(choice[1], choice[2], choice[3], "C", ALPHA);
 		} else if (reaction == 2) {
 			tecido.accumulate(choice[1], choice[2], choice[3], "C", ALPHA);
@@ -596,7 +592,7 @@ int main(){
 			if (tecido.get(choice[1], choice[2], choice[3], "IP3") < 0) {
 				tecido.changeSignal(choice[1], choice[2], choice[3], "IP3");
 			}
-		} else */if (reaction >= 9 && reaction <= 11) {
+		} else if (reaction >= 9 && reaction <= 11) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
 			if (connections[0] != -1 && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[0], "C")) {
