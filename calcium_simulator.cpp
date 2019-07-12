@@ -2,14 +2,15 @@
 
 using namespace std;
 
-#define DIM_X 15
-#define DIM_Y 15
+#define DIM_X 3
+#define DIM_Y 5
 #define DIM_Z 1
 #define ALPHA 0.01
 #define PI 3.14159265359
 
 double conc, tx_conc, diameter_cell = 5, deltaamp;
 int destination = 2;
+
 
 // #### GAP JUNCTIONS PROBABILITIES FOR ASTROCYTES #### //
 double phl[50] = {3.33333333333e-01,9.51756626745e-02,2.71812917035e-02,7.76661124715e-03,2.22288659849e-03,6.39921679991e-04,1.87410416804e-04,5.81750667195e-05,2.17596143238e-05,1.1436923158e-05,7.88454209682e-06,7.43738619183e-06,7.37970057786e-06,7.29603316347e-06,7.27478942971e-06,7.26006289992e-06,7.26084787208e-06,7.26080132601e-06,7.26061054996e-06,7.26081361742e-06,7.26079620991e-06,7.26072365567e-06,7.26058079345e-06,7.26074725419e-06,7.26087576894e-06,7.26073008288e-06,7.26061194028e-06,7.26074336727e-06,7.26101528686e-06,7.26081974085e-06,7.26091667847e-06,7.26058059059e-06,7.26084014577e-06,7.2610063969e-06,7.26069065682e-06,7.26083092741e-06,7.26076153595e-06,7.26071756287e-06,7.26092535023e-06,7.26076421324e-06,7.26060026219e-06,7.26075209967e-06,7.26093367537e-06,7.26073986493e-06,7.26039032094e-06,7.26091299989e-06,7.26077756319e-06,7.26071491915e-06,7.2607710224e-06,7.26082337127e-06};
@@ -151,6 +152,31 @@ public:
 			}
 			cout << endl;
 		}
+	}
+
+	void writeFileHeader(ofstream &file){
+		for (int i = 0; i < DIM_Y; i++) {
+			for (int j = 0; j < DIM_X; j++) {
+				if(i == DIM_Y-1 && j == DIM_X-1)
+					file << i << "_" << j;
+				else
+					file <<  i << "_" << j << ",";
+			}
+		}
+		file << endl;
+	}
+
+	void printTissuef(ofstream &file, int time_int){
+		file << time_int << ",";
+		for (int i = 0; i < DIM_Y; i++) {
+			for (int j = 0; j < DIM_X; j++) {
+				if(i == DIM_Y-1 && j == DIM_X-1)
+					file << get(j, i, trunc(DIM_Z / 2), "C");
+				else
+					file <<  get(j, i, trunc(DIM_Z / 2), "C") << ",";
+			}
+		}
+		file << endl;
 	}
 
 	void regularDegree() {
@@ -475,16 +501,24 @@ public:
 };
 
 int main(){
+
+	ofstream exportfile; //File containing the data that will be plotted
+	exportfile.open("data.txt");
+
 	Network tecido;
 	int tx_x = trunc(DIM_X / 2);
 	int tx_y = trunc(DIM_Y / 2);
 	int tx_z = trunc(DIM_Z / 2);
+
+	tecido.writeFileHeader(exportfile);
 
 	// DEFININDO A TOPOLOGIA REGULAR DEGREE
 	tecido.regularDegree();
 
 	tecido.set(tx_x, tx_y, tx_z, "C", 0.5);
 	//tecido.set(1, 0, 0, "C", 0.5);
+
+	tecido.printTissuef(exportfile, 0); //Writes the tissue's initial state to the file
 
 	// Inicializando o Algoritmo de Gillespie
 	Gillespie gillespie(&tecido);
@@ -532,6 +566,10 @@ int main(){
 			// Print Tissue
 			tecido.printTissue();
 			cout << endl;
+			// End Print Tissue
+
+			// Write Tissue on file
+			tecido.printTissuef(exportfile, int_time);
 			// End Print Tissue
 
 			// Update Gap Junctions
@@ -653,7 +691,7 @@ int main(){
 	cout << "Cell: (" << choice[1] << ", " << choice[2] << ", " << choice[3] << ")" << endl;
 	cout << "Tau: " << choice[4] << endl;
 
-
+	exportfile.close();
 
 	/*for (int i = 0; i < DIM_Y; i++) {
 		for (int j = 0; j < DIM_X; j++) {
