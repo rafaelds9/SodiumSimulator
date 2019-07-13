@@ -1,8 +1,8 @@
-#include <bits/stdc++.h>
+#include <bits/stdc++.h> 
 
 using namespace std;
 
-#define DIM_X 3
+#define DIM_X 13
 #define DIM_Y 5
 #define DIM_Z 1
 #define ALPHA 0.01
@@ -10,7 +10,6 @@ using namespace std;
 
 double conc, tx_conc, diameter_cell = 5, deltaamp;
 int destination = 2;
-
 
 // #### GAP JUNCTIONS PROBABILITIES FOR ASTROCYTES #### //
 double phl[50] = {3.33333333333e-01,9.51756626745e-02,2.71812917035e-02,7.76661124715e-03,2.22288659849e-03,6.39921679991e-04,1.87410416804e-04,5.81750667195e-05,2.17596143238e-05,1.1436923158e-05,7.88454209682e-06,7.43738619183e-06,7.37970057786e-06,7.29603316347e-06,7.27478942971e-06,7.26006289992e-06,7.26084787208e-06,7.26080132601e-06,7.26061054996e-06,7.26081361742e-06,7.26079620991e-06,7.26072365567e-06,7.26058079345e-06,7.26074725419e-06,7.26087576894e-06,7.26073008288e-06,7.26061194028e-06,7.26074336727e-06,7.26101528686e-06,7.26081974085e-06,7.26091667847e-06,7.26058059059e-06,7.26084014577e-06,7.2610063969e-06,7.26069065682e-06,7.26083092741e-06,7.26076153595e-06,7.26071756287e-06,7.26092535023e-06,7.26076421324e-06,7.26060026219e-06,7.26075209967e-06,7.26093367537e-06,7.26073986493e-06,7.26039032094e-06,7.26091299989e-06,7.26077756319e-06,7.26071491915e-06,7.2607710224e-06,7.26082337127e-06};
@@ -24,14 +23,14 @@ public:
 	int id;
 
 	Cell() {
-		/*
+		/*	
 			0v1: taxa de liberação de Cálcio do Tx
-			1Y:
+			1Y: 
 			2vin: o fluxo de calcio que parte do espaço extracelular, por meio da membrana do astrócito, até o interior do citosol
 			3VM2: o fluxo máximo de íons de cálcio fora da bomba (???)
 			4C: Concentração de Cálcio no citosol
 			5n: Coeficiente de Hill (2.02)
-			6K2:
+			6K2: 
 			10kf: constante que determina a liberação de cálcio do RE para o citosol
 			22D: coneficiente de difusão
 			23l: volume da célula
@@ -91,12 +90,12 @@ public:
 
 		int id_cont = 0;
 
-		for (int i = 0; i < DIM_X; i++) {
-			for (int j = 0; j < DIM_Y; j++) {
+		for (int i = 0; i < DIM_Y; i++) {
+			for (int j = 0; j < DIM_X; j++) {
 				for (int k = 0; k < DIM_Z; k++) {
 					Cell celula;
 					celula.setId(id_cont);
-					tecido[j][i][k] = celula;
+					tecido[i][j][k] = celula;
 					id_cont++;
 				}
 			}
@@ -146,9 +145,9 @@ public:
 
 	void printTissue() {
 		cout << endl;
-		for (int i = 0; i < DIM_Y; i++) {
-			for (int j = 0; j < DIM_X; j++) {
-				cout << get(j, i, trunc(DIM_Z / 2), "C") << " ";
+		for (int i = 0; i < DIM_X; i++) {
+			for (int j = 0; j < DIM_Y; j++) {
+				cout << get(i, j, trunc(DIM_Z / 2), "C") << " ";
 			}
 			cout << endl;
 		}
@@ -184,26 +183,26 @@ public:
 			for (int y = 0; y < DIM_Y; y++) {
 				for (int z = 0; z < DIM_Z; z++) {
 					// x + 1
-					if (x + 1 < DIM_X) {
-						connect[getId(x, y, z)].push_back(getId(x + 1, y, z));
-					} else {
-						connect[getId(x, y, z)].push_back(-1);
-					}
-					// x - 1
-					if (x - 1 >= 0) {
-						connect[getId(x, y, z)].push_back(getId(x - 1, y, z));
-					} else {
-						connect[getId(x, y, z)].push_back(-1);
-					}
-					// y + 1
 					if (y + 1 < DIM_Y) {
 						connect[getId(x, y, z)].push_back(getId(x, y + 1, z));
 					} else {
 						connect[getId(x, y, z)].push_back(-1);
 					}
-					// y - 1
+					// x - 1
 					if (y - 1 >= 0) {
 						connect[getId(x, y, z)].push_back(getId(x, y - 1, z));
+					} else {
+						connect[getId(x, y, z)].push_back(-1);
+					}
+					// y + 1
+					if (x + 1 < DIM_X) {
+						connect[getId(x, y, z)].push_back(getId(x + 1, y, z));
+					} else {
+						connect[getId(x, y, z)].push_back(-1);
+					}
+					// y - 1
+					if (x - 1 >= 0) {
+						connect[getId(x, y, z)].push_back(getId(x - 1, y, z));
 					} else {
 						connect[getId(x, y, z)].push_back(-1);
 					}
@@ -232,7 +231,7 @@ public:
 				cout << *it << " ";
 			}
 			cout << endl;
-		}
+		} 
 	}
 
 	vector<int> getConnections(int id) {
@@ -254,9 +253,9 @@ public:
 	Gillespie(Network *rede) {
 		tecido = rede;
 
-		for (int i = 0; i < DIM_Y; i++) {
-			for (int j = 0; j < DIM_X; j++) {
-				cout << "(" << j << "," << i << ") " << tecido->get(j, i, trunc(DIM_Z / 2), "C") << " ";
+		for (int i = 0; i < DIM_X; i++) {
+			for (int j = 0; j < DIM_Y; j++) {
+				cout << "(" << j << "," << i << ") " << tecido->getId(i, j, trunc(DIM_Z / 2)) << " " << tecido->get(i, j, trunc(DIM_Z / 2), "C") << " ";
 			}
 			cout << endl;
 		}
@@ -388,11 +387,11 @@ public:
 							for (int d = 0; d < diffusion.size(); d++) {
 								reaction_value = diffusion[d];
 								reactions[j][i][k][r + d] = reaction_value;
-
+								
 								/*if (reaction_value >= max_reaction) {
 									max_reaction = reaction_value;
 									cell[0] = j; cell[1] = i; cell[2] = k;
-
+									
 									if (d >= 0 && d <= 2)
 										reaction_choice = 8;
 									else if (d >= 3 && d <= 5)
@@ -417,7 +416,7 @@ public:
 								cell[0] = j; cell[1] = i; cell[2] = k;
 								reaction_choice = r;
 							}*/
-
+							
 							alfa_0 += reaction_value;
 						}
 					}
@@ -460,7 +459,7 @@ public:
 				for (int k = 0; k < DIM_Z; k++) {
 					for (int r = 0; r < num_reactions + 17; r++) {
 						sum_upper += reactions[j][i][k][r];
-
+						
 						if (sum_upper >= alfa_0 * r2) {
 							//cout << i << " " << j << " " << k << " " << r << endl;
 
@@ -504,7 +503,7 @@ int main(){
 
 	ofstream exportfile; //File containing the data that will be plotted
 	exportfile.open("data.txt");
-
+	
 	Network tecido;
 	int tx_x = trunc(DIM_X / 2);
 	int tx_y = trunc(DIM_Y / 2);
@@ -512,28 +511,20 @@ int main(){
 
 	tecido.writeFileHeader(exportfile);
 
+	tecido.printTissue();
+
 	// DEFININDO A TOPOLOGIA REGULAR DEGREE
 	tecido.regularDegree();
 
+	cout << tx_x << " " << tx_y << " " << tx_z << endl;
+
 	tecido.set(tx_x, tx_y, tx_z, "C", 0.5);
-	//tecido.set(1, 0, 0, "C", 0.5);
+	cout << tecido.get(tx_x, tx_y, tx_z, "C") << endl;
 
 	tecido.printTissuef(exportfile, 0); //Writes the tissue's initial state to the file
 
 	// Inicializando o Algoritmo de Gillespie
 	Gillespie gillespie(&tecido);
-
-	//return 0;
-	/*cout << tecido.getId(1, 0, 0) << endl;
-	cout << tecido.get(tecido.getId(1, 0, 0), "C") << endl;
-	cout << tecido.get(1, 0, 0, "C") << endl;
-
-	tecido.set(tecido.getId(1, 0, 0), "C", 0.7);
-	cout << endl;
-	cout << tecido.get(tecido.getId(1, 0, 0), "C") << endl;
-	cout << tecido.get(1, 0, 0, "C") << endl;
-
-	return 0;*/
 
 	vector<double> choice(5);
 	vector<int> connections(6), qtd_reactions(26);
@@ -548,13 +539,22 @@ int main(){
 
 		qtd_reactions[reaction - 1]++;
 
+
+		// DEBUG (To see reaction by reaction)
+		/* cout << endl;
+		cout << "Reaction: " << reaction << endl;
+		cout << "Cell: " << tecido.getId(choice[1], choice[2], choice[3]) << endl;
+		tecido.printTissue();
+		cout << endl;
+		getchar(); */
+
 		//cout << current_time << endl;
 
 		if (trunc(current_time) != int_time) {
 			int_time = trunc(current_time);
-
+			
 			cout << "Time: " << int_time << endl;
-
+			
 			// Print Reactions
 			cout << "Reactions: ";
 			for (int i = 0; i < qtd_reactions.size(); i++) {
@@ -562,7 +562,7 @@ int main(){
 			}
 			cout << endl;
 			// End Print Reactions
-
+			
 			// Print Tissue
 			tecido.printTissue();
 			cout << endl;
@@ -633,6 +633,8 @@ int main(){
 		} else if (reaction >= 9 && reaction <= 11) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[0] << endl;
+
 			if (connections[0] != -1 && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[0], "C")) {
 				tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
 				tecido.accumulate(connections[0], "C", ALPHA);
@@ -641,6 +643,8 @@ int main(){
 			}
 		} else if (reaction >= 12 && reaction <= 14) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[1] << endl;
 
 			if (connections[1] != -1  && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[1], "C")) {
 				tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
@@ -651,6 +655,8 @@ int main(){
 		} else if (reaction >= 15 && reaction <= 17) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[2] << endl;
+
 			if (connections[2] != -1  && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[2], "C")) {
 				tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
 				tecido.accumulate(connections[2], "C", ALPHA);
@@ -659,6 +665,8 @@ int main(){
 			}
 		} else if (reaction >= 18 && reaction <= 20) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[3] << endl;
 
 			if (connections[3] != -1  && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[3], "C")) {
 				tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
@@ -669,6 +677,8 @@ int main(){
 		} else if (reaction >= 21 && reaction <= 23) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[4] << endl;
+
 			if (connections[4] != -1  && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[4], "C")) {
 				tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
 				tecido.accumulate(connections[4], "C", ALPHA);
@@ -677,6 +687,8 @@ int main(){
 			}
 		} else {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[5] << endl;
 
 			if (connections[5] != -1  && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[5], "C")) {
 				tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
@@ -690,15 +702,6 @@ int main(){
 	cout << "Reaction: " << choice[0] << endl;
 	cout << "Cell: (" << choice[1] << ", " << choice[2] << ", " << choice[3] << ")" << endl;
 	cout << "Tau: " << choice[4] << endl;
-
-	exportfile.close();
-
-	/*for (int i = 0; i < DIM_Y; i++) {
-		for (int j = 0; j < DIM_X; j++) {
-			cout << "(" << j << "," << i << ") " << tecido.get(j, i, 0, "C") << " ";
-		}
-		cout << endl;
-	}*/
 
 	return 0;
 }
