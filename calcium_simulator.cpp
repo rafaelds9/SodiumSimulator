@@ -2,9 +2,9 @@
 
 using namespace std;
 
-#define DIM_X 7
-#define DIM_Y 15
-#define DIM_Z 3
+#define DIM_X 13
+#define DIM_Y 5
+#define DIM_Z 1
 #define ALPHA 0.01
 #define PI 3.14159265359
 
@@ -90,12 +90,12 @@ public:
 
 		int id_cont = 0;
 
-		for (int i = 0; i < DIM_X; i++) {
-			for (int j = 0; j < DIM_Y; j++) {
+		for (int i = 0; i < DIM_Y; i++) {
+			for (int j = 0; j < DIM_X; j++) {
 				for (int k = 0; k < DIM_Z; k++) {
 					Cell celula;
 					celula.setId(id_cont);
-					tecido[j][i][k] = celula;
+					tecido[i][j][k] = celula;
 					id_cont++;
 				}
 			}
@@ -145,9 +145,9 @@ public:
 
 	void printTissue() {
 		cout << endl;
-		for (int i = 0; i < DIM_Y; i++) {
-			for (int j = 0; j < DIM_X; j++) {
-				cout << get(j, i, trunc(DIM_Z / 2), "C") << " ";
+		for (int i = 0; i < DIM_X; i++) {
+			for (int j = 0; j < DIM_Y; j++) {
+				cout << get(i, j, trunc(DIM_Z / 2), "C") << " ";
 			}
 			cout << endl;
 		}
@@ -158,26 +158,26 @@ public:
 			for (int y = 0; y < DIM_Y; y++) {
 				for (int z = 0; z < DIM_Z; z++) {
 					// x + 1
-					if (x + 1 < DIM_X) {
-						connect[getId(x, y, z)].push_back(getId(x + 1, y, z));
-					} else {
-						connect[getId(x, y, z)].push_back(-1);
-					}
-					// x - 1
-					if (x - 1 >= 0) {
-						connect[getId(x, y, z)].push_back(getId(x - 1, y, z));
-					} else {
-						connect[getId(x, y, z)].push_back(-1);
-					}
-					// y + 1
 					if (y + 1 < DIM_Y) {
 						connect[getId(x, y, z)].push_back(getId(x, y + 1, z));
 					} else {
 						connect[getId(x, y, z)].push_back(-1);
 					}
-					// y - 1
+					// x - 1
 					if (y - 1 >= 0) {
 						connect[getId(x, y, z)].push_back(getId(x, y - 1, z));
+					} else {
+						connect[getId(x, y, z)].push_back(-1);
+					}
+					// y + 1
+					if (x + 1 < DIM_X) {
+						connect[getId(x, y, z)].push_back(getId(x + 1, y, z));
+					} else {
+						connect[getId(x, y, z)].push_back(-1);
+					}
+					// y - 1
+					if (x - 1 >= 0) {
+						connect[getId(x, y, z)].push_back(getId(x - 1, y, z));
 					} else {
 						connect[getId(x, y, z)].push_back(-1);
 					}
@@ -228,9 +228,9 @@ public:
 	Gillespie(Network *rede) {
 		tecido = rede;
 
-		for (int i = 0; i < DIM_Y; i++) {
-			for (int j = 0; j < DIM_X; j++) {
-				cout << "(" << j << "," << i << ") " << tecido->get(j, i, trunc(DIM_Z / 2), "C") << " ";
+		for (int i = 0; i < DIM_X; i++) {
+			for (int j = 0; j < DIM_Y; j++) {
+				cout << "(" << j << "," << i << ") " << tecido->getId(i, j, trunc(DIM_Z / 2)) << " " << tecido->get(i, j, trunc(DIM_Z / 2), "C") << " ";
 			}
 			cout << endl;
 		}
@@ -480,26 +480,18 @@ int main(){
 	int tx_y = trunc(DIM_Y / 2);
 	int tx_z = trunc(DIM_Z / 2);
 
+	tecido.printTissue();
+
 	// DEFININDO A TOPOLOGIA REGULAR DEGREE
 	tecido.regularDegree();
 
+	cout << tx_x << " " << tx_y << " " << tx_z << endl;
+
 	tecido.set(tx_x, tx_y, tx_z, "C", 0.5);
-	//tecido.set(1, 0, 0, "C", 0.5);
+	cout << tecido.get(tx_x, tx_y, tx_z, "C") << endl;
 
 	// Inicializando o Algoritmo de Gillespie
 	Gillespie gillespie(&tecido);
-
-	//return 0;
-	/*cout << tecido.getId(1, 0, 0) << endl;
-	cout << tecido.get(tecido.getId(1, 0, 0), "C") << endl;
-	cout << tecido.get(1, 0, 0, "C") << endl;
-
-	tecido.set(tecido.getId(1, 0, 0), "C", 0.7);
-	cout << endl;
-	cout << tecido.get(tecido.getId(1, 0, 0), "C") << endl;
-	cout << tecido.get(1, 0, 0, "C") << endl;
-
-	return 0;*/
 
 	vector<double> choice(5);
 	vector<int> connections(6), qtd_reactions(26);
@@ -513,6 +505,15 @@ int main(){
 		reaction = choice[0];
 
 		qtd_reactions[reaction - 1]++;
+
+
+		// DEBUG (To see reaction by reaction)
+		/* cout << endl;
+		cout << "Reaction: " << reaction << endl;
+		cout << "Cell: " << tecido.getId(choice[1], choice[2], choice[3]) << endl;
+		tecido.printTissue();
+		cout << endl;
+		getchar(); */
 
 		//cout << current_time << endl;
 
@@ -595,6 +596,8 @@ int main(){
 		} else if (reaction >= 9 && reaction <= 11) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[0] << endl;
+
 			if (connections[0] != -1 && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[0], "C")) {
 				tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
 				tecido.accumulate(connections[0], "C", ALPHA);
@@ -603,6 +606,8 @@ int main(){
 			}
 		} else if (reaction >= 12 && reaction <= 14) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[1] << endl;
 
 			if (connections[1] != -1  && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[1], "C")) {
 				tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
@@ -613,6 +618,8 @@ int main(){
 		} else if (reaction >= 15 && reaction <= 17) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[2] << endl;
+
 			if (connections[2] != -1  && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[2], "C")) {
 				tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
 				tecido.accumulate(connections[2], "C", ALPHA);
@@ -621,6 +628,8 @@ int main(){
 			}
 		} else if (reaction >= 18 && reaction <= 20) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[3] << endl;
 
 			if (connections[3] != -1  && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[3], "C")) {
 				tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
@@ -631,6 +640,8 @@ int main(){
 		} else if (reaction >= 21 && reaction <= 23) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[4] << endl;
+
 			if (connections[4] != -1  && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[4], "C")) {
 				tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
 				tecido.accumulate(connections[4], "C", ALPHA);
@@ -639,6 +650,8 @@ int main(){
 			}
 		} else {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[5] << endl;
 
 			if (connections[5] != -1  && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[5], "C")) {
 				tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
@@ -652,15 +665,6 @@ int main(){
 	cout << "Reaction: " << choice[0] << endl;
 	cout << "Cell: (" << choice[1] << ", " << choice[2] << ", " << choice[3] << ")" << endl;
 	cout << "Tau: " << choice[4] << endl;
-
-
-
-	/*for (int i = 0; i < DIM_Y; i++) {
-		for (int j = 0; j < DIM_X; j++) {
-			cout << "(" << j << "," << i << ") " << tecido.get(j, i, 0, "C") << " ";
-		}
-		cout << endl;
-	}*/	
 
 	return 0;
 }
