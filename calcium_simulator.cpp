@@ -2,14 +2,14 @@
 
 using namespace std;
 
-#define DIM_X 13
+#define DIM_X 15
 #define DIM_Y 5
-#define DIM_Z 1
+#define DIM_Z 3
 #define ALPHA 0.01
 #define PI 3.14159265359
 
 double conc, tx_conc, diameter_cell = 5, deltaamp;
-int destination = 2;
+int destination = 7;
 
 // #### GAP JUNCTIONS PROBABILITIES FOR ASTROCYTES #### //
 double phl[50] = {3.33333333333e-01,9.51756626745e-02,2.71812917035e-02,7.76661124715e-03,2.22288659849e-03,6.39921679991e-04,1.87410416804e-04,5.81750667195e-05,2.17596143238e-05,1.1436923158e-05,7.88454209682e-06,7.43738619183e-06,7.37970057786e-06,7.29603316347e-06,7.27478942971e-06,7.26006289992e-06,7.26084787208e-06,7.26080132601e-06,7.26061054996e-06,7.26081361742e-06,7.26079620991e-06,7.26072365567e-06,7.26058079345e-06,7.26074725419e-06,7.26087576894e-06,7.26073008288e-06,7.26061194028e-06,7.26074336727e-06,7.26101528686e-06,7.26081974085e-06,7.26091667847e-06,7.26058059059e-06,7.26084014577e-06,7.2610063969e-06,7.26069065682e-06,7.26083092741e-06,7.26076153595e-06,7.26071756287e-06,7.26092535023e-06,7.26076421324e-06,7.26060026219e-06,7.26075209967e-06,7.26093367537e-06,7.26073986493e-06,7.26039032094e-06,7.26091299989e-06,7.26077756319e-06,7.26071491915e-06,7.2607710224e-06,7.26082337127e-06};
@@ -90,9 +90,9 @@ public:
 
 		int id_cont = 0;
 
-		for (int i = 0; i < DIM_Y; i++) {
-			for (int j = 0; j < DIM_X; j++) {
-				for (int k = 0; k < DIM_Z; k++) {
+		for (int k = 0; k < DIM_Z; k++) {
+			for (int i = 0; i < DIM_Y; i++) {
+				for (int j = 0; j < DIM_X; j++) {
 					Cell celula;
 					celula.setId(id_cont);
 					tecido[i][j][k] = celula;
@@ -485,9 +485,8 @@ int main(){
 	// DEFININDO A TOPOLOGIA REGULAR DEGREE
 	tecido.regularDegree();
 
-	cout << tx_x << " " << tx_y << " " << tx_z << endl;
-
 	tecido.set(tx_x, tx_y, tx_z, "C", 0.5);
+	tecido.set(tx_x + destination, tx_y, tx_z, "C", 0.5);
 	cout << tecido.get(tx_x, tx_y, tx_z, "C") << endl;
 
 	// Inicializando o Algoritmo de Gillespie
@@ -497,6 +496,8 @@ int main(){
 	vector<int> connections(6), qtd_reactions(26);
 	double simulation_time = 200, current_time = 0;
 	int reaction, int_time = 0;
+
+	vector<double> C_tx, C_rx;
 
 	while (simulation_time > current_time) {
 		choice = gillespie.run();
@@ -547,8 +548,13 @@ int main(){
 					}
 				}
 			}
+
+			// Calcium oscillations
+			if (int_time % 1 == 0)
+				tecido.accumulate(tx_x, tx_y, tx_z, "C", 0.5);
 		}
 
+		/* INTRACELULAR REACTIONS */
 		if (reaction == 1) {
 			tecido.accumulate(choice[1], choice[2], choice[3], "C", ALPHA);
 		} else if (reaction == 2) {
@@ -593,7 +599,10 @@ int main(){
 			if (tecido.get(choice[1], choice[2], choice[3], "IP3") < 0) {
 				tecido.changeSignal(choice[1], choice[2], choice[3], "IP3");
 			}
-		} else if (reaction >= 9 && reaction <= 11) {
+		}
+
+		/* DIFFUSION REACTIONS */
+		else if (reaction >= 9 && reaction <= 11) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
 			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[0] << endl;
@@ -660,7 +669,27 @@ int main(){
 				cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[5] << endl;
 			}
 		}
+
+
+		/* STORAGE OF CALCIUM CONCENTRATION */
+		C_tx.push_back(tecido.get(tx_x, tx_y, tx_z, "C"));
+		C_rx.push_back(tecido.get(tx_x + destination, tx_y, tx_z, "C"));
 	}
+
+	
+	/* ### CALCULATING GAIN ### */
+	ofstream file_gain;
+	file_gain.open("gain.txt", ios::app);
+	
+	double acc_c_tx = accumulate(C_tx.begin(), C_tx.end(), 0.0);
+	double acc_c_rx = accumulate(C_rx.begin(), C_rx.end(), 0.0);
+
+	double calc_gain = 10 * log10((acc_c_rx/C_rx.size())/((acc_c_tx)/C_tx.size()));
+	file_gain << calc_gain << endl;
+
+	file_gain.close();
+
+	/* ### END GAIN ### */
 
 	cout << "Reaction: " << choice[0] << endl;
 	cout << "Cell: (" << choice[1] << ", " << choice[2] << ", " << choice[3] << ")" << endl;
