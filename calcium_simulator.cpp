@@ -1,10 +1,10 @@
-#include <bits/stdc++.h> 
+#include <bits/stdc++.h>
 
 using namespace std;
 
-#define DIM_X 15
-#define DIM_Y 5
-#define DIM_Z 3
+#define DIM_X 7
+#define DIM_Y 3
+#define DIM_Z 1
 #define ALPHA 0.01
 #define PI 3.14159265359
 
@@ -23,14 +23,14 @@ public:
 	int id;
 
 	Cell() {
-		/*	
+		/*
 			0v1: taxa de liberação de Cálcio do Tx
-			1Y: 
+			1Y:
 			2vin: o fluxo de calcio que parte do espaço extracelular, por meio da membrana do astrócito, até o interior do citosol
 			3VM2: o fluxo máximo de íons de cálcio fora da bomba (???)
 			4C: Concentração de Cálcio no citosol
 			5n: Coeficiente de Hill (2.02)
-			6K2: 
+			6K2:
 			10kf: constante que determina a liberação de cálcio do RE para o citosol
 			22D: coneficiente de difusão
 			23l: volume da célula
@@ -153,6 +153,31 @@ public:
 		}
 	}
 
+  void writeFileHeader(ofstream &file){
+    for (int i = 0; i < DIM_Y; i++) {
+      for (int j = 0; j < DIM_X; j++) {
+        if(i == DIM_Y-1 && j == DIM_X-1)
+          file << i << "_" << j;
+        else
+          file <<  i << "_" << j << ",";
+      }
+    }
+    file << endl;
+  }
+
+  void printTissuef(ofstream &file, int time_int){
+    file << time_int << ",";
+    for (int i = 0; i < DIM_Y; i++) {
+      for (int j = 0; j < DIM_X; j++) {
+        if(i == DIM_Y-1 && j == DIM_X-1)
+          file << get(j, i, trunc(DIM_Z / 2), "C");
+        else
+          file <<  get(j, i, trunc(DIM_Z / 2), "C") << ",";
+      }
+    }
+    file << endl;
+  }
+
 	void regularDegree() {
 		for (int x = 0; x < DIM_X; x++) {
 			for (int y = 0; y < DIM_Y; y++) {
@@ -206,7 +231,7 @@ public:
 				cout << *it << " ";
 			}
 			cout << endl;
-		} 
+		}
 	}
 
 	vector<int> getConnections(int id) {
@@ -362,11 +387,11 @@ public:
 							for (int d = 0; d < diffusion.size(); d++) {
 								reaction_value = diffusion[d];
 								reactions[j][i][k][r + d] = reaction_value;
-								
+
 								/*if (reaction_value >= max_reaction) {
 									max_reaction = reaction_value;
 									cell[0] = j; cell[1] = i; cell[2] = k;
-									
+
 									if (d >= 0 && d <= 2)
 										reaction_choice = 8;
 									else if (d >= 3 && d <= 5)
@@ -391,7 +416,7 @@ public:
 								cell[0] = j; cell[1] = i; cell[2] = k;
 								reaction_choice = r;
 							}*/
-							
+
 							alfa_0 += reaction_value;
 						}
 					}
@@ -434,7 +459,7 @@ public:
 				for (int k = 0; k < DIM_Z; k++) {
 					for (int r = 0; r < num_reactions + 17; r++) {
 						sum_upper += reactions[j][i][k][r];
-						
+
 						if (sum_upper >= alfa_0 * r2) {
 							//cout << i << " " << j << " " << k << " " << r << endl;
 
@@ -475,10 +500,16 @@ public:
 };
 
 int main(){
+
+  ofstream exportfile; //File containing the data that will be plotted
+	exportfile.open("Temp/data.txt");
+
 	Network tecido;
 	int tx_x = trunc(DIM_X / 2);
 	int tx_y = trunc(DIM_Y / 2);
 	int tx_z = trunc(DIM_Z / 2);
+
+  tecido.writeFileHeader(exportfile);
 
 	tecido.printTissue();
 
@@ -486,8 +517,10 @@ int main(){
 	tecido.regularDegree();
 
 	tecido.set(tx_x, tx_y, tx_z, "C", 0.5);
-	tecido.set(tx_x + destination, tx_y, tx_z, "C", 0.5);
+	//tecido.set(tx_x + destination, tx_y, tx_z, "C", 0.5);
 	cout << tecido.get(tx_x, tx_y, tx_z, "C") << endl;
+
+  tecido.printTissuef(exportfile, 0); //Writes the tissue's initial state to the file
 
 	// Inicializando o Algoritmo de Gillespie
 	Gillespie gillespie(&tecido);
@@ -520,9 +553,9 @@ int main(){
 
 		if (trunc(current_time) != int_time) {
 			int_time = trunc(current_time);
-			
+
 			cout << "Time: " << int_time << endl;
-			
+
 			// Print Reactions
 			cout << "Reactions: ";
 			for (int i = 0; i < qtd_reactions.size(); i++) {
@@ -530,11 +563,15 @@ int main(){
 			}
 			cout << endl;
 			// End Print Reactions
-			
+
 			// Print Tissue
 			tecido.printTissue();
 			cout << endl;
 			// End Print Tissue
+
+      // Write Tissue on file
+      tecido.printTissuef(exportfile, int_time);
+      // End Print Tissue
 
 			// Update Gap Junctions
 			if (int_time < 50) {
@@ -676,11 +713,11 @@ int main(){
 		C_rx.push_back(tecido.get(tx_x + destination, tx_y, tx_z, "C"));
 	}
 
-	
+
 	/* ### CALCULATING GAIN ### */
 	ofstream file_gain;
-	file_gain.open("gain.txt", ios::app);
-	
+	file_gain.open("Temp/gain.txt", ios::app);
+
 	double acc_c_tx = accumulate(C_tx.begin(), C_tx.end(), 0.0);
 	double acc_c_rx = accumulate(C_rx.begin(), C_rx.end(), 0.0);
 
