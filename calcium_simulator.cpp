@@ -2,9 +2,9 @@
 
 using namespace std;
 
-#define DIM_X 7
-#define DIM_Y 3
-#define DIM_Z 1
+#define DIM_X 15
+#define DIM_Y 15
+#define DIM_Z 15
 #define ALPHA 0.01
 #define PI 3.14159265359
 
@@ -44,7 +44,7 @@ public:
 		double Y = 0; parameters["Y"] = 0;
 		double vin = 0.05; parameters["vin"] = 0.05;
 		double VM2 = 15; parameters["VM2"] = 15;
-		double C = 0.1; parameters["C"] = 0.1;
+		double C = 15000; parameters["C"] = C;
 		double n = 2.02; parameters["n"] = 2.02;
 		double K2 = 0.1; parameters["K2"] = 0.1;
 		double VM3 = 40; parameters["VM3"] = VM3; // Porque nao 40, como diz no artigo?
@@ -62,7 +62,7 @@ public:
 		double W = 0; parameters["W"] = W;
 		double A = 0; parameters["A"] = A;
 		double kia = 0.5; parameters["kia"] = kia;
-		double D = 122500; parameters["D"] = D;
+		double D = 700*700; parameters["D"] = D;
 		double l = PI * pow(diameter_cell / 2, 2); parameters["l"] = l;
 		double K = 0.0006; parameters["K"] = 0.0006;
 		double ka = 2.5; parameters["ka"] = ka;
@@ -154,28 +154,28 @@ public:
 	}
 
   void writeFileHeader(ofstream &file){
-    for (int i = 0; i < DIM_Y; i++) {
-      for (int j = 0; j < DIM_X; j++) {
-        if(i == DIM_Y-1 && j == DIM_X-1)
-          file << i << "_" << j;
-        else
-          file <<  i << "_" << j << ",";
-      }
-    }
-    file << endl;
+	for (int i = 0; i < DIM_Y; i++) {
+	  for (int j = 0; j < DIM_X; j++) {
+		if(i == DIM_Y-1 && j == DIM_X-1)
+		  file << i << "_" << j;
+		else
+		  file <<  i << "_" << j << ",";
+	  }
+	}
+	file << endl;
   }
 
   void printTissuef(ofstream &file, int time_int){
-    file << time_int << ",";
-    for (int i = 0; i < DIM_Y; i++) {
-      for (int j = 0; j < DIM_X; j++) {
-        if(i == DIM_Y-1 && j == DIM_X-1)
-          file << get(j, i, trunc(DIM_Z / 2), "C");
-        else
-          file <<  get(j, i, trunc(DIM_Z / 2), "C") << ",";
-      }
-    }
-    file << endl;
+	file << time_int << ",";
+	for (int i = 0; i < DIM_Y; i++) {
+	  for (int j = 0; j < DIM_X; j++) {
+		if(i == DIM_Y-1 && j == DIM_X-1)
+		  file << get(j, i, trunc(DIM_Z / 2), "C");
+		else
+		  file <<  get(j, i, trunc(DIM_Z / 2), "C") << ",";
+	  }
+	}
+	file << endl;
   }
 
 	void regularDegree() {
@@ -500,35 +500,34 @@ public:
 };
 
 int main(){
-
-  ofstream exportfile; //File containing the data that will be plotted
-	exportfile.open("Temp/data.txt");
-
 	Network tecido;
 	int tx_x = trunc(DIM_X / 2);
 	int tx_y = trunc(DIM_Y / 2);
 	int tx_z = trunc(DIM_Z / 2);
 
-  tecido.writeFileHeader(exportfile);
+	// Opening file containing the data of calcium concentration that will be plotted
+	ofstream exportfile;
+	exportfile.open("temp/data.txt");
+	tecido.writeFileHeader(exportfile);
 
+
+
+	// Print tissue
 	tecido.printTissue();
 
 	// DEFININDO A TOPOLOGIA REGULAR DEGREE
 	tecido.regularDegree();
 
-	tecido.set(tx_x, tx_y, tx_z, "C", 0.5);
-	//tecido.set(tx_x + destination, tx_y, tx_z, "C", 0.5);
-	cout << tecido.get(tx_x, tx_y, tx_z, "C") << endl;
-
-  tecido.printTissuef(exportfile, 0); //Writes the tissue's initial state to the file
-
+	tecido.set(tx_x, tx_y, tx_z, "C", 29500);
+	tecido.printTissuef(exportfile, 0); // Writes the tissue's initial state to the file
 	// Inicializando o Algoritmo de Gillespie
 	Gillespie gillespie(&tecido);
 
 	vector<double> choice(5);
 	vector<int> connections(6), qtd_reactions(26);
-	double simulation_time = 200, current_time = 0;
+	double simulation_time = 2400, current_time = 0;
 	int reaction, int_time = 0;
+	bool diffusion_error = false;
 
 	vector<double> C_tx, C_rx;
 
@@ -538,6 +537,7 @@ int main(){
 		current_time += (choice[4] * 1000);
 		reaction = choice[0];
 
+		diffusion_error = false;
 		qtd_reactions[reaction - 1]++;
 
 
@@ -569,9 +569,9 @@ int main(){
 			cout << endl;
 			// End Print Tissue
 
-      // Write Tissue on file
-      tecido.printTissuef(exportfile, int_time);
-      // End Print Tissue
+			// Write Calcium concentration of tissue on file
+			tecido.printTissuef(exportfile, int_time);
+			// End Print Tissue
 
 			// Update Gap Junctions
 			if (int_time < 50) {
@@ -587,11 +587,14 @@ int main(){
 			}
 
 			// Calcium oscillations
+			/*
 			if (int_time % 1 == 0)
 				tecido.accumulate(tx_x, tx_y, tx_z, "C", 0.5);
+			*/
 		}
 
 		/* INTRACELULAR REACTIONS */
+		/*
 		if (reaction == 1) {
 			tecido.accumulate(choice[1], choice[2], choice[3], "C", ALPHA);
 		} else if (reaction == 2) {
@@ -637,7 +640,7 @@ int main(){
 				tecido.changeSignal(choice[1], choice[2], choice[3], "IP3");
 			}
 		}
-
+		*/
 		/* DIFFUSION REACTIONS */
 		else if (reaction >= 9 && reaction <= 11) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
@@ -649,6 +652,7 @@ int main(){
 				tecido.accumulate(connections[0], "C", ALPHA);
 			} else {
 				cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[0] << endl;
+				diffusion_error = true;
 			}
 		} else if (reaction >= 12 && reaction <= 14) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
@@ -660,6 +664,7 @@ int main(){
 				tecido.accumulate(connections[1], "C", ALPHA);
 			} else {
 				cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[1] << endl;
+				diffusion_error = true;
 			}
 		} else if (reaction >= 15 && reaction <= 17) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
@@ -671,6 +676,7 @@ int main(){
 				tecido.accumulate(connections[2], "C", ALPHA);
 			} else {
 				cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[2] << endl;
+				diffusion_error = true;
 			}
 		} else if (reaction >= 18 && reaction <= 20) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
@@ -682,6 +688,7 @@ int main(){
 				tecido.accumulate(connections[3], "C", ALPHA);
 			} else {
 				cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[3] << endl;
+				diffusion_error = true;
 			}
 		} else if (reaction >= 21 && reaction <= 23) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
@@ -693,6 +700,7 @@ int main(){
 				tecido.accumulate(connections[4], "C", ALPHA);
 			} else {
 				cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[4] << endl;
+				diffusion_error = true;
 			}
 		} else {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
@@ -703,7 +711,8 @@ int main(){
 				tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
 				tecido.accumulate(connections[5], "C", ALPHA);
 			} else {
-				cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[5] << endl;
+				//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[5] << endl;
+				diffusion_error = true;
 			}
 		}
 
@@ -711,23 +720,26 @@ int main(){
 		/* STORAGE OF CALCIUM CONCENTRATION */
 		C_tx.push_back(tecido.get(tx_x, tx_y, tx_z, "C"));
 		C_rx.push_back(tecido.get(tx_x + destination, tx_y, tx_z, "C"));
+
+		/* DIFFUSION ERROR => NO INCREMENT TIME */
+		if (diffusion_error) current_time -= (choice[4] * 1000);
 	}
 
-
 	/* ### CALCULATING GAIN ### */
+	/*
 	ofstream file_gain;
-	file_gain.open("Temp/gain.txt", ios::app);
+	file_gain.open("results/gain.txt", ios::app);
 
 	double acc_c_tx = accumulate(C_tx.begin(), C_tx.end(), 0.0);
 	double acc_c_rx = accumulate(C_rx.begin(), C_rx.end(), 0.0);
 
-	double calc_gain = 10 * log10((acc_c_rx/C_rx.size())/((acc_c_tx)/C_tx.size()));
+	double calc_gain = 10 * log10((acc_c_rx / C_rx.size()) / ((acc_c_tx) / C_tx.size()));
 	file_gain << calc_gain << endl;
 
 	file_gain.close();
-
+	*/
 	/* ### END GAIN ### */
-
+	exportfile.close();
 	cout << "Reaction: " << choice[0] << endl;
 	cout << "Cell: (" << choice[1] << ", " << choice[2] << ", " << choice[3] << ")" << endl;
 	cout << "Tau: " << choice[4] << endl;

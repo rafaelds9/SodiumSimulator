@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 #DIM_Y = 3
 
 
-data = pd.read_csv("Temp/data.txt")
+dataCa = pd.read_csv("temp/data.txt")
 
 #Finding the tissue's dimensions
-underline = 0;
-a = data.columns[-1]
+underline = 0
+a = dataCa.columns[-1]
 aux_X = ''
 aux_Y = ''
 for i in a:
@@ -18,41 +18,41 @@ for i in a:
         underline = 1
     else:
         if underline == 0:
-            aux_X += i;
+            aux_X += i
         else:
             aux_Y += i
 DIM_X = int(aux_X) + 1
 DIM_Y = int(aux_Y) + 1
 
-#print(data.iloc[selected_line:selected_line+1,:].values[0])
+#print(dataCa.iloc[selected_line:selected_line+1,:].values[0])
 
 
-for selected_line in range(0, data.shape[0]):
+for selected_line in range(0, dataCa.shape[0]):
 
-    npdata = np.array([])
+    npdataCa = np.array([])
     for i in range(0, DIM_X):
         for j in range(0, DIM_Y):
-            npdata = np.append(npdata,data.iloc[selected_line:selected_line+1,DIM_Y*i+j].values[0])
+            npdataCa = np.append(npdataCa,dataCa.iloc[selected_line:selected_line+1,DIM_Y*i+j].values[0])
 
-    npdata = (npdata.reshape(DIM_X,DIM_Y)).transpose()
-    print(npdata)
+    npdataCa = (npdataCa.reshape(DIM_X,DIM_Y)).transpose()
+    print("\n====================\n\n",npdataCa)
 
 
     if selected_line == 0:
-        plt.title("Tissue - Initial State")
-        p = plt.imshow(npdata, cmap = 'hot', vmax = 6, vmin = 0.1)
+        plt.title("Initial State - Sodium:")
+        p = plt.imshow(npdataCa, cmap = 'hot', vmax = 29500, vmin = 15000)
         plt.colorbar(p)
+        print("\nTime", selected_line)
         print("\nInitial state of the tissue. Close the plot window to proceed.\n")
         plt.show()
-        p = plt.imshow(npdata, cmap = 'hot', vmax = 6, vmin = 0.1)
+        p = plt.imshow(npdataCa, cmap = 'hot', vmax = 29500, vmin = 15000)
         plt.colorbar(p)
         fig = plt.gcf()
         plt.clim()   # clamp the color limits
-        plt.title("Reactions on the Tissue")
+        plt.title("sodium diffusion on the tissue")
     else:
-        p.set_data(npdata)
-
-    print("\nStep", selected_line)
+        p.set_data(npdataCa)
+        print("\nTime", selected_line)
     plt.pause(0.1)
 print("\nThe simulation ended. Close the plot window to finish the application.\n\n")
 plt.show()
