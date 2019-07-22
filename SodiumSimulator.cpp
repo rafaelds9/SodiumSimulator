@@ -2,9 +2,9 @@
 
 using namespace std;
 
-#define DIM_X 15
-#define DIM_Y 15
-#define DIM_Z 15
+#define DIM_X 5
+#define DIM_Y 3
+#define DIM_Z 1
 #define ALPHA 0.01
 #define PI 3.14159265359
 
@@ -62,7 +62,7 @@ public:
 		double W = 0; parameters["W"] = W;
 		double A = 0; parameters["A"] = A;
 		double kia = 0.5; parameters["kia"] = kia;
-		double D = 700*700; parameters["D"] = D;
+		double D = (4/3)*700; parameters["D"] = D;
 		double l = PI * pow(diameter_cell / 2, 2); parameters["l"] = l;
 		double K = 0.0006; parameters["K"] = 0.0006;
 		double ka = 2.5; parameters["ka"] = ka;
@@ -525,7 +525,7 @@ int main(){
 
 	vector<double> choice(5);
 	vector<int> connections(6), qtd_reactions(26);
-	double simulation_time = 2400, current_time = 0;
+	double simulation_time = 200, current_time = 0;
 	int reaction, int_time = 0;
 	bool diffusion_error = false;
 
