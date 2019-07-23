@@ -4,7 +4,7 @@ using namespace std;
 
 #define DIM_X 15
 #define DIM_Y 5
-#define DIM_Z 3
+#define DIM_Z 1
 #define ALPHA 0.01
 #define PI 3.14159265359
 
@@ -32,7 +32,7 @@ public:
 			5n: Coeficiente de Hill (2.02)
 			6K2:
 			10kf: constante que determina a liberação de cálcio do RE para o citosol
-			22D: coneficiente de difusão
+			22D: coeficiente de difusão
 			23l: volume da célula
 			24K: taxa máxima da ativação do receptor (Nakano, 2010; Eq. 3)
 			25ka: taxa máxima da ativação do receptor (2.5) (Nakano, 2010; Eq. 3)
@@ -44,7 +44,7 @@ public:
 		double Y = 0; parameters["Y"] = 0;
 		double vin = 0.05; parameters["vin"] = 0.05;
 		double VM2 = 15; parameters["VM2"] = 15;
-		double C = 15000; parameters["C"] = C;
+		double C = 0.1; parameters["C"] = C;
 		double n = 2.02; parameters["n"] = 2.02;
 		double K2 = 0.1; parameters["K2"] = 0.1;
 		double VM3 = 40; parameters["VM3"] = VM3; // Porque nao 40, como diz no artigo?
@@ -62,7 +62,7 @@ public:
 		double W = 0; parameters["W"] = W;
 		double A = 0; parameters["A"] = A;
 		double kia = 0.5; parameters["kia"] = kia;
-		double D = (4/3)*700; parameters["D"] = D;
+		double D = 350*350; parameters["D"] = D;
 		double l = PI * pow(diameter_cell / 2, 2); parameters["l"] = l;
 		double K = 0.0006; parameters["K"] = 0.0006;
 		double ka = 2.5; parameters["ka"] = ka;
@@ -70,7 +70,12 @@ public:
 		parameters["phl"] = phl[0];
 		parameters["plh"] = plh[0];
 		parameters["phh"] = phh[0];
-	}
+		double Vm = -80; parameters["Vm"] = Vm; //Verify this value later - Kirischuk
+		double Na_i = 15000;  parameters["Na_i"] = Na_i; //Langer3, Chatton 2016
+		double Na_o = 150000;  parameters["Na_o"] = Na_o; //chatton 2016
+		double NaD = (4/3)*700; parameters["NaD"] = NaD; 
+		//double Ca_o = ; parameters["Ca_o"] = Ca_o; //Kirischuk
+	} 
 
 	void setId(int ID) {
 		id = ID;
@@ -343,10 +348,28 @@ public:
 		return diff;
 	}
 
+	//Reaction 10: Calcium-Sodium exchange through the membrane
+	/* Forward mode: calcium extrusion with 3Na influx
+	   Reverse mode: 3Na extrusion associated with 1Ca influx
+	   
+	   The switch between these modes is controoled by the transmembrane gradients and the level of membrane potential.
+	   Depolarization and Na_i increase favours the reverse mode while increases in Ca_i push the exchanger to the
+	   forward mode. The NCX reversal potential is close to the resting membrane potential (-80mV). --> let's say it -75mV.
+	
+	   For further information you shall read Kirischuk's paper (2012)
+
+	   I may use pointers to return the Na and Ca concentrations 
+	*/
+	double CaNaNCX(int id){
+
+		
+
+		
+	}
 
 	vector<double> run() {
 		int NC = DIM_X * DIM_Y * DIM_Z; // Total number of cells
-		int num_reactions = 9; // Number of reactions (7 Intracellular + 1 Intercelular)
+		int num_reactions = 10; // Number of reactions (8 Intracellular + 1 Intercelular + 1 transmembranal)
 		double max_reaction = 0, reaction_choice, alfa_0 = 0, reaction_value;
 		vector<double> retorno(5);
 		vector<double> diffusion(18);
@@ -408,7 +431,12 @@ public:
 
 								alfa_0 += reaction_value;
 							}
-						}
+						} /*else if (r == 9) {
+							reaction_value = CaNaNCX(tecido->getId(i, j, k));
+							//reactions[j][i][k][r] = reaction_value;
+
+						} 
+						*/
 
 						if (r != 8) {
 							/*if (reaction_value >= max_reaction) {
@@ -518,7 +546,7 @@ int main(){
 	// DEFININDO A TOPOLOGIA REGULAR DEGREE
 	tecido.regularDegree();
 
-	tecido.set(tx_x, tx_y, tx_z, "C", 29500);
+	tecido.set(tx_x, tx_y, tx_z, "C", 0.5);
 	tecido.printTissuef(exportfile, 0); // Writes the tissue's initial state to the file
 	// Inicializando o Algoritmo de Gillespie
 	Gillespie gillespie(&tecido);
