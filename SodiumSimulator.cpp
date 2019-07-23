@@ -2,9 +2,9 @@
 
 using namespace std;
 
-#define DIM_X 5
-#define DIM_Y 3
-#define DIM_Z 1
+#define DIM_X 15
+#define DIM_Y 5
+#define DIM_Z 3
 #define ALPHA 0.01
 #define PI 3.14159265359
 

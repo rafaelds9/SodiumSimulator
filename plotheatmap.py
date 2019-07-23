@@ -42,14 +42,19 @@ for selected_line in range(0, dataCa.shape[0]):
         plt.title("Initial State - Sodium:")
         p = plt.imshow(npdataCa, cmap = 'hot', vmax = 29500, vmin = 15000)
         plt.colorbar(p)
+        plt.xticks(np.arange(0, DIM_X))
+        plt.yticks(np.arange(0, DIM_Y))
+
         print("\nTime", selected_line)
         print("\nInitial state of the tissue. Close the plot window to proceed.\n")
         plt.show()
         p = plt.imshow(npdataCa, cmap = 'hot', vmax = 29500, vmin = 15000)
         plt.colorbar(p)
+        plt.xticks(np.arange(0, DIM_X))
+        plt.yticks(np.arange(0, DIM_Y))
         fig = plt.gcf()
         plt.clim()   # clamp the color limits
-        plt.title("sodium diffusion on the tissue")
+        plt.title("Sodium diffusion on the tissue")
     else:
         p.set_data(npdataCa)
         print("\nTime", selected_line)
