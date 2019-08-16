@@ -228,51 +228,52 @@ public:
 		}
 
 		void linkRadius(int radius) {
-		for (int x = 0; x < DIM_X; x++) {
-			for (int y = 0; y < DIM_Y; y++) {
-				for (int z = 0; z < DIM_Z; z++) {
-					for (int r = 1; r <= radius; r++) {
-						// x + r
-						if (y + r < DIM_Y) {
-							connect[getId(x, y, z)].push_back(getId(x, y + r, z));
-						} else {
-							connect[getId(x, y, z)].push_back(-1);
-						}
-						// x - r
-						if (y - r >= 0) {
-							connect[getId(x, y, z)].push_back(getId(x, y - r, z));
-						} else {
-							connect[getId(x, y, z)].push_back(-1);
-						}
-						// y + r
-						if (x + r < DIM_X) {
-							connect[getId(x, y, z)].push_back(getId(x + r, y, z));
-						} else {
-							connect[getId(x, y, z)].push_back(-1);
-						}
-						// y - r
-						if (x - r >= 0) {
-							connect[getId(x, y, z)].push_back(getId(x - r, y, z));
-						} else {
-							connect[getId(x, y, z)].push_back(-1);
-						}
-						// z + r
-						if (z + r < DIM_Z) {
-							connect[getId(x, y, z)].push_back(getId(x, y, z + r));
-						} else {
-							connect[getId(x, y, z)].push_back(-1);
-						}
-						// z - r
-						if (z - r >= 0) {
-							connect[getId(x, y, z)].push_back(getId(x, y, z - r));
-						} else {
-							connect[getId(x, y, z)].push_back(-1);
+			for (int x = 0; x < DIM_X; x++) {
+				for (int y = 0; y < DIM_Y; y++) {
+					for (int z = 0; z < DIM_Z; z++) {
+						for (int r = 1; r <= radius; r++) {
+							// x + r
+							if (y + r < DIM_Y) {
+								connect[getId(x, y, z)].push_back(getId(x, y + r, z));
+							} else {
+								connect[getId(x, y, z)].push_back(-1);
+							}
+							// x - r
+							if (y - r >= 0) {
+								connect[getId(x, y, z)].push_back(getId(x, y - r, z));
+							} else {
+								connect[getId(x, y, z)].push_back(-1);
+							}
+							// y + r
+							if (x + r < DIM_X) {
+								connect[getId(x, y, z)].push_back(getId(x + r, y, z));
+							} else {
+								connect[getId(x, y, z)].push_back(-1);
+							}
+							// y - r
+							if (x - r >= 0) {
+								connect[getId(x, y, z)].push_back(getId(x - r, y, z));
+							} else {
+								connect[getId(x, y, z)].push_back(-1);
+							}
+							// z + r
+							if (z + r < DIM_Z) {
+								connect[getId(x, y, z)].push_back(getId(x, y, z + r));
+							} else {
+								connect[getId(x, y, z)].push_back(-1);
+							}
+							// z - r
+							if (z - r >= 0) {
+								connect[getId(x, y, z)].push_back(getId(x, y, z - r));
+							} else {
+								connect[getId(x, y, z)].push_back(-1);
+							}
 						}
 					}
 				}
 			}
 		}
-
+		
 		// IMPRIMINDO AS CONEXÕES DE CADA CÉLULA
 		list<int>::iterator it;
 
