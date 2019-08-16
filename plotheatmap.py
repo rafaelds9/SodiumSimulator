@@ -40,7 +40,7 @@ for selected_line in range(0, dataCa.shape[0]):
 
     if selected_line == 0:
         plt.title("Initial State - Sodium:")
-        p = plt.imshow(npdataCa, cmap = 'hot', vmax = 29500, vmin = 15000)
+        p = plt.imshow(npdataCa, cmap = 'hot', vmax = 20000, vmin = 15000)
         plt.colorbar(p)
         plt.xticks(np.arange(0, DIM_X))
         plt.yticks(np.arange(0, DIM_Y))
@@ -48,7 +48,7 @@ for selected_line in range(0, dataCa.shape[0]):
         print("\nTime", selected_line)
         print("\nInitial state of the tissue. Close the plot window to proceed.\n")
         plt.show()
-        p = plt.imshow(npdataCa, cmap = 'hot', vmax = 29500, vmin = 15000)
+        p = plt.imshow(npdataCa, cmap = 'hot', vmax = 20000, vmin = 15000)
         plt.colorbar(p)
         plt.xticks(np.arange(0, DIM_X))
         plt.yticks(np.arange(0, DIM_Y))
