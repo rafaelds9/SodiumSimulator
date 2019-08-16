@@ -62,7 +62,7 @@ public:
 		double W = 0; parameters["W"] = W;
 		double A = 0; parameters["A"] = A;
 		double kia = 0.5; parameters["kia"] = kia;
-		double D = (4/3)*6000; parameters["D"] = D;
+		double D = (4/3)*3.14*6000; parameters["D"] = D;
 		double l = PI * pow(diameter_cell / 2, 2); parameters["l"] = l;
 		double K = 0.0006; parameters["K"] = 0.0006;
 		double ka = 2.5; parameters["ka"] = ka;
@@ -73,7 +73,7 @@ public:
 		double Vm = -80; parameters["Vm"] = Vm; //Verify this value later - Kirischuk
 		double Na_i = 15000;  parameters["Na_i"] = Na_i; //Langer3, Chatton 2016
 		double Na_o = 150000;  parameters["Na_o"] = Na_o; //chatton 2016
-		double NaD = (4/3)*700; parameters["NaD"] = NaD; 
+		double NaD = (4/3)*3.14*6000; parameters["NaD"] = NaD; 
 		//double Ca_o = ; parameters["Ca_o"] = Ca_o; //Kirischuk
 	} 
 
@@ -222,6 +222,52 @@ public:
 						connect[getId(x, y, z)].push_back(getId(x, y, z - 1));
 					} else {
 						connect[getId(x, y, z)].push_back(-1);
+					}
+				}
+			}
+		}
+
+		void linkRadius(int radius) {
+		for (int x = 0; x < DIM_X; x++) {
+			for (int y = 0; y < DIM_Y; y++) {
+				for (int z = 0; z < DIM_Z; z++) {
+					for (int r = 1; r <= radius; r++) {
+						// x + r
+						if (y + r < DIM_Y) {
+							connect[getId(x, y, z)].push_back(getId(x, y + r, z));
+						} else {
+							connect[getId(x, y, z)].push_back(-1);
+						}
+						// x - r
+						if (y - r >= 0) {
+							connect[getId(x, y, z)].push_back(getId(x, y - r, z));
+						} else {
+							connect[getId(x, y, z)].push_back(-1);
+						}
+						// y + r
+						if (x + r < DIM_X) {
+							connect[getId(x, y, z)].push_back(getId(x + r, y, z));
+						} else {
+							connect[getId(x, y, z)].push_back(-1);
+						}
+						// y - r
+						if (x - r >= 0) {
+							connect[getId(x, y, z)].push_back(getId(x - r, y, z));
+						} else {
+							connect[getId(x, y, z)].push_back(-1);
+						}
+						// z + r
+						if (z + r < DIM_Z) {
+							connect[getId(x, y, z)].push_back(getId(x, y, z + r));
+						} else {
+							connect[getId(x, y, z)].push_back(-1);
+						}
+						// z - r
+						if (z - r >= 0) {
+							connect[getId(x, y, z)].push_back(getId(x, y, z - r));
+						} else {
+							connect[getId(x, y, z)].push_back(-1);
+						}
 					}
 				}
 			}
