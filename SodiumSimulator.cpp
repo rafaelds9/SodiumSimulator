@@ -44,7 +44,7 @@ public:
 		double Y = 0; parameters["Y"] = 0;
 		double vin = 0.05; parameters["vin"] = 0.05;
 		double VM2 = 15; parameters["VM2"] = 15;
-		double C = 15000; parameters["C"] = C;
+		double C = 0.1; parameters["C"] = C;
 		double n = 2.02; parameters["n"] = 2.02;
 		double K2 = 0.1; parameters["K2"] = 0.1;
 		double VM3 = 40; parameters["VM3"] = VM3; // Porque nao 40, como diz no artigo?
@@ -62,7 +62,7 @@ public:
 		double W = 0; parameters["W"] = W;
 		double A = 0; parameters["A"] = A;
 		double kia = 0.5; parameters["kia"] = kia;
-		double D = (4/3)*3.14*6000; parameters["D"] = D;
+		double D = (4/3)*3.14*350; parameters["D"] = D;
 		double l = PI * pow(diameter_cell / 2, 2); parameters["l"] = l;
 		double K = 0.0006; parameters["K"] = 0.0006;
 		double ka = 2.5; parameters["ka"] = ka;
@@ -226,54 +226,65 @@ public:
 				}
 			}
 		}
+	
+		// IMPRIMINDO AS CONEXÕES DE CADA CÉLULA
+		list<int>::iterator it;
 
-		void linkRadius(int radius) {
-			for (int x = 0; x < DIM_X; x++) {
-				for (int y = 0; y < DIM_Y; y++) {
-					for (int z = 0; z < DIM_Z; z++) {
-						for (int r = 1; r <= radius; r++) {
-							// x + r
-							if (y + r < DIM_Y) {
-								connect[getId(x, y, z)].push_back(getId(x, y + r, z));
-							} else {
-								connect[getId(x, y, z)].push_back(-1);
-							}
-							// x - r
-							if (y - r >= 0) {
-								connect[getId(x, y, z)].push_back(getId(x, y - r, z));
-							} else {
-								connect[getId(x, y, z)].push_back(-1);
-							}
-							// y + r
-							if (x + r < DIM_X) {
-								connect[getId(x, y, z)].push_back(getId(x + r, y, z));
-							} else {
-								connect[getId(x, y, z)].push_back(-1);
-							}
-							// y - r
-							if (x - r >= 0) {
-								connect[getId(x, y, z)].push_back(getId(x - r, y, z));
-							} else {
-								connect[getId(x, y, z)].push_back(-1);
-							}
-							// z + r
-							if (z + r < DIM_Z) {
-								connect[getId(x, y, z)].push_back(getId(x, y, z + r));
-							} else {
-								connect[getId(x, y, z)].push_back(-1);
-							}
-							// z - r
-							if (z - r >= 0) {
-								connect[getId(x, y, z)].push_back(getId(x, y, z - r));
-							} else {
-								connect[getId(x, y, z)].push_back(-1);
-							}
+		for (int v = 0; v < NC; v++) {
+			cout << "Célula " << v << ": ";
+			for (it = connect[v].begin(); it != connect[v].end(); it++){
+				cout << *it << " ";
+			}
+			cout << endl;
+		}
+	}
+		
+	void linkRadius(int radius) {
+		for (int x = 0; x < DIM_X; x++) {
+			for (int y = 0; y < DIM_Y; y++) {
+				for (int z = 0; z < DIM_Z; z++) {
+					for (int r = 1; r <= radius; r++) {
+						// x + r
+						if (y + r < DIM_Y) {
+							connect[getId(x, y, z)].push_back(getId(x, y + r, z));
+						} else {
+							connect[getId(x, y, z)].push_back(-1);
+						}
+						// x - r
+						if (y - r >= 0) {
+							connect[getId(x, y, z)].push_back(getId(x, y - r, z));
+						} else {
+							connect[getId(x, y, z)].push_back(-1);
+						}
+						// y + r
+						if (x + r < DIM_X) {
+							connect[getId(x, y, z)].push_back(getId(x + r, y, z));
+						} else {
+							connect[getId(x, y, z)].push_back(-1);
+						}
+						// y - r
+						if (x - r >= 0) {
+							connect[getId(x, y, z)].push_back(getId(x - r, y, z));
+						} else {
+							connect[getId(x, y, z)].push_back(-1);
+						}
+						// z + r
+						if (z + r < DIM_Z) {
+							connect[getId(x, y, z)].push_back(getId(x, y, z + r));
+						} else {
+							connect[getId(x, y, z)].push_back(-1);
+						}
+						// z - r
+						if (z - r >= 0) {
+							connect[getId(x, y, z)].push_back(getId(x, y, z - r));
+						} else {
+							connect[getId(x, y, z)].push_back(-1);
 						}
 					}
 				}
 			}
 		}
-		
+
 		// IMPRIMINDO AS CONEXÕES DE CADA CÉLULA
 		list<int>::iterator it;
 
@@ -593,7 +604,7 @@ int main(){
 	// DEFININDO A TOPOLOGIA REGULAR DEGREE
 	tecido.regularDegree();
 
-	tecido.set(tx_x, tx_y, tx_z, "C", 20000);
+	tecido.set(tx_x, tx_y, tx_z, "C", 0.5);
 	tecido.printTissuef(exportfile, 0); // Writes the tissue's initial state to the file
 	// Inicializando o Algoritmo de Gillespie
 	Gillespie gillespie(&tecido);
@@ -662,11 +673,12 @@ int main(){
 			}
 
 			// Calcium oscillations
-			
-			if (int_time % 50 == 0)
-				tecido.accumulate(tx_x, tx_y, tx_z, "C", 20000);
-			
+		/*	
+			if (int_time % 1 == 0)
+				tecido.accumulate(tx_x, tx_y, tx_z, "C", 0.5);
+		*/	
 		}
+		
 
 		/* INTRACELULAR REACTIONS */
 		/*
@@ -717,6 +729,7 @@ int main(){
 		}
 		*/
 		/* DIFFUSION REACTIONS */
+		//Calcium Diffusion
 		else if (reaction >= 9 && reaction <= 11) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
