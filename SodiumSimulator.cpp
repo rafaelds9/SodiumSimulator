@@ -2,7 +2,7 @@
 
 using namespace std;
 
-#define DIM_X 11
+#define DIM_X 7
 #define DIM_Y 5
 #define DIM_Z 3
 #define ALPHA 0.01
@@ -152,7 +152,7 @@ public:
 		cout << endl;
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
-				cout << get(i, j, trunc(DIM_Z / 2), "C") << " ";
+				cout << get(i, j, trunc(DIM_Z / 2), "C") << "\\" << get(i, j, trunc(DIM_Z / 2), "Na_i") << " ";
 			}
 			cout << endl;
 		}
@@ -318,7 +318,7 @@ public:
 
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
-				cout << "(" << j << "," << i << ") " << tecido->getId(i, j, trunc(DIM_Z / 2)) << " " << tecido->get(i, j, trunc(DIM_Z / 2), "C") << " ";
+				cout << "(" << j << "," << i << ") " << tecido->getId(i, j, trunc(DIM_Z / 2)) << " " << tecido->get(i, j, trunc(DIM_Z / 2), "C") << "/" << tecido->get(i, j, trunc(DIM_Z / 2), "Na_i") << " ";
 			}
 			cout << endl;
 		}
@@ -405,6 +405,47 @@ public:
 
 		return diff;
 	}
+//===============================================
+	// Reaction 10
+	vector<double> Nadiffusions(int id) {
+		vector<double> diffusions(18);
+
+		vector<int> connections(6);
+		connections = tecido->getConnections(id);
+		double value;
+
+		for (int i = 0; i < connections.size(); i++){
+			for (int gj = 0; gj < 3; gj++) {
+				if (connections[i] != -1)
+					value = NadiffusionEquation(id, connections[i], gj);
+				else
+					value = 0;
+
+				diffusions[(3 * i) + gj] = value;
+			}
+		}
+
+		return diffusions;
+	}
+
+	double NadiffusionEquation(int id1, int id2, int gap_junction) {
+		//double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
+		double diff;
+
+		if (tecido->get(id1, "Na_i") <= tecido->get(id2, "Na_i"))
+			return 0;
+
+		if (gap_junction == 0) {
+			diff = (tecido->get(id1, "NaD") / tecido->get(id1, "l")) * (tecido->get(id1, "Na_i") - tecido->get(id2, "Na_i")) * tecido->get(id1, "phh");
+		} else if (gap_junction == 1) {
+			diff = (tecido->get(id1, "NaD") / tecido->get(id1, "l")) * (tecido->get(id1, "Na_i") - tecido->get(id2, "Na_i")) * tecido->get(id1, "phl");
+		} else {
+			diff = (tecido->get(id1, "NaD") / tecido->get(id1, "l")) * (tecido->get(id1, "Na_i") - tecido->get(id2, "Na_i")) * tecido->get(id1, "plh");
+		}
+
+		return diff;
+	}
+//=======================
 
 	//Reaction 10: Calcium-Sodium exchange through the membrane
 	/* Forward mode: calcium extrusion with 3Na influx
@@ -417,13 +458,14 @@ public:
 	   For further information you shall read Kirischuk's paper (2012)
 
 	   I may use pointers to return the Na and Ca concentrations 
-	*/
+	
 	double CaNaNCX(int id){
 
 		
 
 		
 	}
+	*/
 
 	vector<double> run() {
 		int NC = DIM_X * DIM_Y * DIM_Z; // Total number of cells
@@ -431,7 +473,9 @@ public:
 		double max_reaction = 0, reaction_choice, alfa_0 = 0, reaction_value;
 		vector<double> retorno(5);
 		vector<double> diffusion(18);
-		double reactions[DIM_Y][DIM_X][DIM_Z][num_reactions + 17];
+		vector<double> Nadiffusion(18);
+
+		double reactions[DIM_Y][DIM_X][DIM_Z][num_reactions + 34];
 
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
@@ -489,14 +533,42 @@ public:
 
 								alfa_0 += reaction_value;
 							}
-						} /*else if (r == 9) {
+						}
+						 else if (r == 9) {
+							Nadiffusion = Nadiffusions(tecido->getId(i, j, k));
+							for (int d = 17; d < Nadiffusion.size() + 17; d++) {
+								reaction_value = Nadiffusion[d - 17];
+								reactions[j][i][k][r + d] = reaction_value;
+
+								/*if (reaction_value >= max_reaction) {
+									max_reaction = reaction_value;
+									cell[0] = j; cell[1] = i; cell[2] = k;
+
+									if (d >= 0 && d <= 2)
+										reaction_choice = 8;
+									else if (d >= 3 && d <= 5)
+										reaction_choice = 9;
+									else if (d >= 6 && d <= 8)
+										reaction_choice = 10;
+									else if (d >= 9 && d <= 11)
+										reaction_choice = 11;
+									else if (d >= 12 && d <= 14)
+										reaction_choice = 12;
+									else
+										reaction_choice = 13;
+								}*/
+
+								alfa_0 += reaction_value;
+							}
+						}
+						/*else if (r == 10) {
 							reaction_value = CaNaNCX(tecido->getId(i, j, k));
 							//reactions[j][i][k][r] = reaction_value;
 
 						} 
 						*/
 
-						if (r != 8) {
+						if ((r != 8)&&(r != 9)) {
 							/*if (reaction_value >= max_reaction) {
 								max_reaction = reaction_value;
 								cell[0] = j; cell[1] = i; cell[2] = k;
@@ -543,7 +615,7 @@ public:
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
 				for (int k = 0; k < DIM_Z; k++) {
-					for (int r = 0; r < num_reactions + 17; r++) {
+					for (int r = 0; r < num_reactions + 34; r++) {
 						sum_upper += reactions[j][i][k][r];
 
 						if (sum_upper >= alfa_0 * r2) {
@@ -554,7 +626,7 @@ public:
 							for (int x = 0; x < DIM_X && flag == false; x++) {
 								for (int y = 0; y < DIM_Y && flag == false; y++) {
 									for (int z = 0; z < DIM_Z && flag == false; z++) {
-										for (int n = 0; n < num_reactions + 17 && flag == false; n++) {
+										for (int n = 0; n < num_reactions + 34 && flag == false; n++) {
 											if (x == i && y == j && z == k && n == r) {
 												//cout << x << " " << y << " " << z << " " << n << endl;
 												//cout << sum_down << " " << alfa_0 * r2 << " " << sum_upper << endl;
@@ -596,7 +668,7 @@ int main(){
 	exportfile.open("temp/data.txt");
 	tecido.writeFileHeader(exportfile);
 
-
+	
 
 	// Print tissue
 	tecido.printTissue();
@@ -605,12 +677,12 @@ int main(){
 	tecido.regularDegree();
 
 	tecido.set(tx_x, tx_y, tx_z, "C", 0.5);
+	tecido.set(tx_x, tx_y, tx_z, "Na_i", 20000);
 	tecido.printTissuef(exportfile, 0); // Writes the tissue's initial state to the file
 	// Inicializando o Algoritmo de Gillespie
 	Gillespie gillespie(&tecido);
-
 	vector<double> choice(5);
-	vector<int> connections(6), qtd_reactions(26);
+	vector<int> connections(6), qtd_reactions(44);
 	double simulation_time = 200, current_time = 0;
 	int reaction, int_time = 0;
 	bool diffusion_error = false;
@@ -618,23 +690,27 @@ int main(){
 	vector<double> C_tx, C_rx;
 
 	while (simulation_time > current_time) {
+		
 		choice = gillespie.run();
-
+		
+		//cout << choice[4] << "\n";
+		
 		current_time += (choice[4] * 1000);
 		reaction = choice[0];
-
+		
 		diffusion_error = false;
 		qtd_reactions[reaction - 1]++;
 
 
 		// DEBUG (To see reaction by reaction)
-		/* cout << endl;
+		/*
+		cout << endl;
 		cout << "Reaction: " << reaction << endl;
 		cout << "Cell: " << tecido.getId(choice[1], choice[2], choice[3]) << endl;
 		tecido.printTissue();
 		cout << endl;
-		getchar(); */
-
+		getchar();
+		*/
 		//cout << current_time << endl;
 
 		if (trunc(current_time) != int_time) {
@@ -678,10 +754,10 @@ int main(){
 				tecido.accumulate(tx_x, tx_y, tx_z, "C", 0.5);
 		*/	
 		}
-		
+
 
 		/* INTRACELULAR REACTIONS */
-		/*
+		
 		if (reaction == 1) {
 			tecido.accumulate(choice[1], choice[2], choice[3], "C", ALPHA);
 		} else if (reaction == 2) {
@@ -727,7 +803,7 @@ int main(){
 				tecido.changeSignal(choice[1], choice[2], choice[3], "IP3");
 			}
 		}
-		*/
+		
 		/* DIFFUSION REACTIONS */
 		//Calcium Diffusion
 		else if (reaction >= 9 && reaction <= 11) {
@@ -790,7 +866,7 @@ int main(){
 				cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[4] << endl;
 				diffusion_error = true;
 			}
-		} else {
+		} else if (reaction >= 24 && reaction <= 26){
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
 			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[5] << endl;
@@ -798,6 +874,76 @@ int main(){
 			if (connections[5] != -1  && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[5], "C")) {
 				tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
 				tecido.accumulate(connections[5], "C", ALPHA);
+			} else {
+				//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[5] << endl;
+				diffusion_error = true;
+			}
+		} 
+		
+		//Sodium
+		else if (reaction >= 27 && reaction <= 29) {
+			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[0] << endl;
+
+			if (connections[0] != -1 && tecido.get(choice[1], choice[2], choice[3], "Na_i") > tecido.get(connections[0], "Na_i")) {
+				tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", -ALPHA);
+				tecido.accumulate(connections[0], "Na_i", ALPHA);
+			} else {
+				cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[0] << endl;
+				diffusion_error = true;
+			}
+		} else if (reaction >= 30 && reaction <= 32) {
+			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[1] << endl;
+
+			if (connections[1] != -1  && tecido.get(choice[1], choice[2], choice[3], "Na_i") > tecido.get(connections[1], "Na_i")) {
+				tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", -ALPHA);
+				tecido.accumulate(connections[1], "Na_i", ALPHA);
+			} else {
+				cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[1] << endl;
+				diffusion_error = true;
+			}
+		} else if (reaction >= 33 && reaction <= 35) {
+			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[2] << endl;
+
+			if (connections[2] != -1  && tecido.get(choice[1], choice[2], choice[3], "Na_i") > tecido.get(connections[2], "Na_i")) {
+				tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", -ALPHA);
+				tecido.accumulate(connections[2], "Na_i", ALPHA);
+			} else {
+				cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[2] << endl;
+				diffusion_error = true;
+			}
+		} else if (reaction >= 36 && reaction <= 38) {
+			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[3] << endl;
+
+			if (connections[3] != -1  && tecido.get(choice[1], choice[2], choice[3], "Na_i") > tecido.get(connections[3], "Na_i")) {
+				tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", -ALPHA);
+				tecido.accumulate(connections[3], "Na_i", ALPHA);
+			} else {
+				cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[3] << endl;
+				diffusion_error = true;
+			}
+		} else if (reaction >= 39 && reaction <= 41) {
+			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[4] << endl;
+
+			if (connections[4] != -1  && tecido.get(choice[1], choice[2], choice[3], "Na_i") > tecido.get(connections[4], "Na_i")) {
+				tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", -ALPHA);
+				tecido.accumulate(connections[4], "Na_i", ALPHA);
+			} else {
+				cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[4] << endl;
+				diffusion_error = true;
+			}
+		} else {
+			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+
+			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[5] << endl;
+
+			if (connections[5] != -1  && tecido.get(choice[1], choice[2], choice[3], "Na_i") > tecido.get(connections[5], "Na_i")) {
+				tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", -ALPHA);
+				tecido.accumulate(connections[5], "Na_i", ALPHA);
 			} else {
 				//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[5] << endl;
 				diffusion_error = true;
