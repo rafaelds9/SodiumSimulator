@@ -2,7 +2,7 @@
 
 using namespace std;
 
-#define DIM_X 7
+#define DIM_X 5
 #define DIM_Y 5
 #define DIM_Z 3
 #define ALPHA 0.01
@@ -62,7 +62,7 @@ public:
 		double W = 0; parameters["W"] = W;
 		double A = 0; parameters["A"] = A;
 		double kia = 0.5; parameters["kia"] = kia;
-		double D = (4/3)*3.14*350; parameters["D"] = D;
+		double D = (4/3)*PI*diameter_cell*350; parameters["D"] = D;
 		double l = PI * pow(diameter_cell / 2, 2); parameters["l"] = l;
 		double K = 0.0006; parameters["K"] = 0.0006;
 		double ka = 2.5; parameters["ka"] = ka;
@@ -73,7 +73,7 @@ public:
 		double Vm = -80; parameters["Vm"] = Vm; //Verify this value later - Kirischuk
 		double Na_i = 15000;  parameters["Na_i"] = Na_i; //Langer3, Chatton 2016
 		double Na_o = 150000;  parameters["Na_o"] = Na_o; //chatton 2016
-		double NaD = (4/3)*3.14*6000; parameters["NaD"] = NaD; 
+		double NaD = (4/3)*PI*diameter_cell*6000; parameters["NaD"] = NaD; 
 		//double Ca_o = ; parameters["Ca_o"] = Ca_o; //Kirischuk
 	} 
 
