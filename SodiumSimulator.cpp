@@ -7,6 +7,7 @@ using namespace std;
 #define DIM_Z 3
 #define ALPHA 0.01
 #define PI 3.14159265359
+#define THRESHOLD -80 // Transmembrane potential in mV to change the NCX mode
 
 double conc, tx_conc, diameter_cell = 5, deltaamp;
 int destination = 1;
@@ -70,11 +71,12 @@ public:
 		parameters["phl"] = phl[0];
 		parameters["plh"] = plh[0];
 		parameters["phh"] = phh[0];
-		double Vm = -80; parameters["Vm"] = Vm; //Verify this value later - Kirischuk
 		double Na_i = 15000;  parameters["Na_i"] = Na_i; //Langer3, Chatton 2016
 		double Na_o = 150000;  parameters["Na_o"] = Na_o; //chatton 2016
 		double NaD = (4/3)*PI*diameter_cell*6000; parameters["NaD"] = NaD; 
-		//double Ca_o = ; parameters["Ca_o"] = Ca_o; //Kirischuk
+		double C_o = 230; parameters["C_o"] = C_o; //Kirischuk 1997
+		double Vm = -80; parameters["Vm"] = Vm; //Verify this value later - Kirischuk 2012
+
 	} 
 
 	void setId(int ID) {
@@ -447,7 +449,7 @@ public:
 	}
 //=======================
 
-	//Reaction 10: Calcium-Sodium exchange through the membrane
+	//Reaction 11: Calcium-Sodium exchange through the membrane
 	/* Forward mode: calcium extrusion with 3Na influx
 	   Reverse mode: 3Na extrusion associated with 1Ca influx
 	   
@@ -458,8 +460,10 @@ public:
 	   For further information you shall read Kirischuk's paper (2012)
 
 	   I may use pointers to return the Na and Ca concentrations 
-	
-	double CaNaNCX(int id){
+	*/
+	/*
+	double NCX(int id){
+		//Difusão de sódio e cálcio externas, com base também na ddp
 
 		
 
@@ -469,7 +473,7 @@ public:
 
 	vector<double> run() {
 		int NC = DIM_X * DIM_Y * DIM_Z; // Total number of cells
-		int num_reactions = 10; // Number of reactions (8 Intracellular + 1 Intercelular + 1 transmembranal)
+		int num_reactions = 10; // Number of reactions (8 Intracellular + 2 Intercelular + 2 transmembranal)
 		double max_reaction = 0, reaction_choice, alfa_0 = 0, reaction_value;
 		vector<double> retorno(5);
 		vector<double> diffusion(18);
@@ -805,7 +809,7 @@ int main(){
 		}
 		
 		/* DIFFUSION REACTIONS */
-		//Calcium Diffusion
+		//Calcium Diffusion between the cells
 		else if (reaction >= 9 && reaction <= 11) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
@@ -880,7 +884,7 @@ int main(){
 			}
 		} 
 		
-		//Sodium
+		//Sodium diffusion between the cells
 		else if (reaction >= 27 && reaction <= 29) {
 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 			//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[0] << endl;
