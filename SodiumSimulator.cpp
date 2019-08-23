@@ -379,7 +379,7 @@ public:
 		for (int i = 0; i < connections.size(); i++){
 			for (int gj = 0; gj < 3; gj++) {
 				if (connections[i] != -1)
-					value = diffusionEquation(id, connections[i], gj);
+					value = Ca_i_diffusionEquation(id, connections[i], gj);
 				else
 					value = 0;
 
@@ -390,7 +390,7 @@ public:
 		return diffusions;
 	}
 
-	double diffusionEquation(int id1, int id2, int gap_junction) {
+	double Ca_i_diffusionEquation(int id1, int id2, int gap_junction) {
 		//double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
 		double diff;
 
@@ -449,6 +449,12 @@ public:
 	}
 //=======================
 
+
+
+
+
+
+
 	//Reaction 11: Calcium-Sodium exchange through the membrane
 	/* Forward mode: calcium extrusion with 3Na influx
 	   Reverse mode: 3Na extrusion associated with 1Ca influx
@@ -473,7 +479,8 @@ public:
 
 	vector<double> run() {
 		int NC = DIM_X * DIM_Y * DIM_Z; // Total number of cells
-		int num_reactions = 10; // Number of reactions (8 Intracellular + 2 Intercelular + 2 transmembranal)
+		int num_reactions = 10; // Number of reactions (8 Intracellular + 2 Intercellular + 1 transmembranal)
+		// 2 extracellular (between the reservoirs) 
 		double max_reaction = 0, reaction_choice, alfa_0 = 0, reaction_value;
 		vector<double> retorno(5);
 		vector<double> diffusion(18);
@@ -953,6 +960,13 @@ int main(){
 				diffusion_error = true;
 			}
 		}
+
+		// Calcium diffusion between the extracellular resevoirs
+
+
+
+		// Sodium diffusion between the extracellular resevoirs
+
 
 
 		/* STORAGE OF CALCIUM CONCENTRATION */
