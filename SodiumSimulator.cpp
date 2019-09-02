@@ -2,12 +2,15 @@
 
 using namespace std;
 
-#define DIM_X 5
-#define DIM_Y 5
+#define SCALE 1
+#define INV_SCALE 1/SCALE
+#define DIM_X 3
+#define DIM_Y 3
 #define DIM_Z 1
-#define ALPHA 0.01
+#define ALPHA 0.01*SCALE
 #define PI 3.14159265359
 #define THRESHOLD -80 // Transmembrane potential in mV to change the NCX mode
+
 
 double conc, tx_conc, diameter_cell = 5, deltaamp;
 int destination = 1;
@@ -41,40 +44,40 @@ public:
 			27phh - 29plh: probabilidades das gap junctions
 		*/
 
-		double v1 = 100; parameters["v1"] = v1;
-		double Y = 0; parameters["Y"] = 0;
-		double vin = 0.05; parameters["vin"] = 0.05;
-		double VM2 = 15; parameters["VM2"] = 15;
-		double C = 0.1; parameters["C"] = C;
-		double n = 2.02; parameters["n"] = 2.02;
-		double K2 = 0.1; parameters["K2"] = 0.1;
-		double VM3 = 40; parameters["VM3"] = VM3; // Porque nao 40, como diz no artigo?
-		double ko = 0.5; parameters["ko"] = ko;
-		double ER = 1.5; parameters["ER"] = ER;
-		double kf = 0.5; parameters["kf"] = kf;
-		double kp = 0.3; parameters["kp"] = kp;
-		double kdeg = 0.08; parameters["kdeg"] = kdeg;
-		double vp = 0.05; parameters["vp"] = vp;
-		double kcaaa = 0.15; parameters["kcaaa"] = 0.15;
-		double kcai = 0.15; parameters["kcai"] = 0.15;
-		double kip3 = 0.1; parameters["kip3"] = 0.1;
-		double IP3 = 0.1; parameters["IP3"] = IP3;
-		double q = 4; parameters["q"] = q;
+		double v1 = SCALE*100; parameters["v1"] = v1;
+		double Y = 0; parameters["Y"] = Y;
+		double vin = SCALE*0.05; parameters["vin"] = vin;
+		double VM2 = SCALE*15; parameters["VM2"] = VM2;
+		double C = SCALE*0.1; parameters["C"] = C;
+		double n = SCALE*2.02; parameters["n"] = n;
+		double K2 = SCALE*0.1; parameters["K2"] = K2;
+		double VM3 = SCALE*40; parameters["VM3"] = VM3; // Porque nao 40, como diz no artigo?
+		double ko = SCALE*0.5; parameters["ko"] = ko;
+		double ER = SCALE*1.5; parameters["ER"] = ER;
+		double kf = SCALE*0.5; parameters["kf"] = kf;
+		double kp = SCALE*0.3; parameters["kp"] = kp;
+		double kdeg = SCALE*0.08; parameters["kdeg"] = kdeg;
+		double vp = SCALE*0.05; parameters["vp"] = vp;
+		double kcaaa = SCALE*0.15; parameters["kcaaa"] = kcaaa;
+		double kcai = SCALE*0.15; parameters["kcai"] = kcai;
+		double kip3 = SCALE*0.1; parameters["kip3"] = kip3;
+		double IP3 = SCALE*0.1; parameters["IP3"] = IP3;
+		double q = SCALE*4; parameters["q"] = q;
 		double W = 0; parameters["W"] = W;
 		double A = 0; parameters["A"] = A;
-		double kia = 0.5; parameters["kia"] = kia;
+		double kia = SCALE*0.5; parameters["kia"] = kia;
 		double D = (4/3)*PI*diameter_cell*350; parameters["D"] = D;
 		double l = PI * pow(diameter_cell / 2, 2); parameters["l"] = l;
-		double K = 0.0006; parameters["K"] = 0.0006;
-		double ka = 2.5; parameters["ka"] = ka;
-		double m = 2.2; parameters["m"] = m;
+		double K = SCALE*0.0006; parameters["K"] = K;
+		double ka = SCALE*2.5; parameters["ka"] = ka;
+		double m = SCALE*2.2; parameters["m"] = m;
 		parameters["phl"] = phl[0];
 		parameters["plh"] = plh[0];
 		parameters["phh"] = phh[0];
-		double Na_i = 15000;  parameters["Na_i"] = Na_i; //Langer3, Chatton 2016
-		double Na_o = 150000/(DIM_X * DIM_Y * DIM_Z);  parameters["Na_o"] = Na_o; //chatton 2016
+		double Na_i = SCALE*15000;  parameters["Na_i"] = Na_i; //Langer3, Chatton 2016 - Colocar uma relação
+		double Na_o = SCALE*150000/(DIM_X * DIM_Y * DIM_Z);  parameters["Na_o"] = Na_o; //chatton 2016
 		double NaD = (4/3)*PI*diameter_cell*6000; parameters["NaD"] = NaD; 
-		double C_o = 2300/(DIM_X * DIM_Y * DIM_Z); parameters["C_o"] = C_o; //Kirischuk 1997
+		double C_o = SCALE*2300/(DIM_X * DIM_Y * DIM_Z); parameters["C_o"] = C_o; //Kirischuk 1997
 		double Vm = -80; parameters["Vm"] = Vm; //Verify this value later - Kirischuk 2012
 
 	} 
@@ -154,7 +157,7 @@ public:
 		cout << endl;
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
-				cout << get(i, j, trunc(DIM_Z / 2), "C") << "\\" << get(i, j, trunc(DIM_Z / 2), "Na_i") << " ";
+				cout << get(i, j, trunc(DIM_Z / 2), "C")*INV_SCALE << "\\" << get(i, j, trunc(DIM_Z / 2), "Na_i")*INV_SCALE << " ";
 			}
 			cout << endl;
 		}
@@ -402,18 +405,15 @@ public:
 					value = Ca_i_diffusionEquation(id, connections[i], gj);
 				else
 					value = 0;
-
 				diffusions[(3 * i) + gj] = value;
 			}
 		}
-
 		return diffusions;
 	}
 
 	double Ca_i_diffusionEquation(int id1, int id2, int gap_junction) {
-		//double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
+		double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
 		double diff;
-
 		if (tecido->get(id1, "C") <= tecido->get(id2, "C"))
 			return 0;
 
@@ -451,18 +451,18 @@ public:
 	}
 
 	double Na_i_diffusionEquation(int id1, int id2, int gap_junction) {
-		//double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
+		double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
 		double diff;
 
 		if (tecido->get(id1, "Na_i") <= tecido->get(id2, "Na_i"))
 			return 0;
 
 		if (gap_junction == 0) {
-			diff = (tecido->get(id1, "NaD") / tecido->get(id1, "l")) * (tecido->get(id1, "Na_i") - tecido->get(id2, "Na_i")) * tecido->get(id1, "phh");
+			diff = (tecido->get(id1, "NaD") / vol_cell ) * (tecido->get(id1, "Na_i") - tecido->get(id2, "Na_i")) * tecido->get(id1, "phh");
 		} else if (gap_junction == 1) {
-			diff = (tecido->get(id1, "NaD") / tecido->get(id1, "l")) * (tecido->get(id1, "Na_i") - tecido->get(id2, "Na_i")) * tecido->get(id1, "phl");
+			diff = (tecido->get(id1, "NaD") / vol_cell ) * (tecido->get(id1, "Na_i") - tecido->get(id2, "Na_i")) * tecido->get(id1, "phl");
 		} else {
-			diff = (tecido->get(id1, "NaD") / tecido->get(id1, "l")) * (tecido->get(id1, "Na_i") - tecido->get(id2, "Na_i")) * tecido->get(id1, "plh");
+			diff = (tecido->get(id1, "NaD") / vol_cell ) * (tecido->get(id1, "Na_i") - tecido->get(id2, "Na_i")) * tecido->get(id1, "plh");
 		}
 
 		return diff;
@@ -471,6 +471,7 @@ public:
 // ========================
 
 	// Reaction 11
+	/*
 	vector<double> C_o_diffusions(int id) {
 		vector<double> diffusions(18);
 
@@ -503,16 +504,16 @@ public:
 						  //we treat them as if there were always open
 
 		if (gap_junction == 0) {
-			diff = (tecido->get(id1, "D") / tecido->get(id1, "l")) * (tecido->get(id1, "C_o") - tecido->get(id2, "C_o")) * tecido->get(id1, "phh");
+			diff = (tecido->get(id1, "D") / vol_cell ) * (tecido->get(id1, "C_o") - tecido->get(id2, "C_o")) * tecido->get(id1, "phh");
 		} else if (gap_junction == 1) {
-			diff = (tecido->get(id1, "D") / tecido->get(id1, "l")) * (tecido->get(id1, "C_o") - tecido->get(id2, "C_o")) * tecido->get(id1, "phl");
+			diff = (tecido->get(id1, "D") / vol_cell ) * (tecido->get(id1, "C_o") - tecido->get(id2, "C_o")) * tecido->get(id1, "phl");
 		} else {
-			diff = (tecido->get(id1, "D") / tecido->get(id1, "l")) * (tecido->get(id1, "C_o") - tecido->get(id2, "C_o")) * tecido->get(id1, "plh");
+			diff = (tecido->get(id1, "D") / vol_cell ) * (tecido->get(id1, "C_o") - tecido->get(id2, "C_o")) * tecido->get(id1, "plh");
 		}
 
 		return diff;
 	}
-
+	
 	// Reaction 12
 	vector<double> Na_o_diffusions(int id) {
 		vector<double> diffusions(18);
@@ -546,16 +547,16 @@ public:
 						  //we treat them as if there were always open
 		
 		if (gap_junction == 0) {
-			diff = (tecido->get(id1, "NaD") / tecido->get(id1, "l")) * (tecido->get(id1, "Na_o") - tecido->get(id2, "Na_o")) * tecido->get(id1, "phh");
+			diff = (tecido->get(id1, "NaD") / vol_cell ) * (tecido->get(id1, "Na_o") - tecido->get(id2, "Na_o")) * tecido->get(id1, "phh");
 		} else if (gap_junction == 1) {
-			diff = (tecido->get(id1, "NaD") / tecido->get(id1, "l")) * (tecido->get(id1, "Na_o") - tecido->get(id2, "Na_o")) * tecido->get(id1, "phl");
+			diff = (tecido->get(id1, "NaD") / vol_cell ) * (tecido->get(id1, "Na_o") - tecido->get(id2, "Na_o")) * tecido->get(id1, "phl");
 		} else {
-			diff = (tecido->get(id1, "NaD") / tecido->get(id1, "l")) * (tecido->get(id1, "Na_o") - tecido->get(id2, "Na_o")) * tecido->get(id1, "plh");
+			diff = (tecido->get(id1, "NaD") / vol_cell ) * (tecido->get(id1, "Na_o") - tecido->get(id2, "Na_o")) * tecido->get(id1, "plh");
 		}
 
 		return diff;
 	}
-
+	*/
 // =========
 	//Reaction 1X: Calcium-Sodium exchange through the membrane
 	/* Forward mode: calcium extrusion with 3Na influx
@@ -581,7 +582,7 @@ public:
 
 	vector<double> run() {
 		int NC = DIM_X * DIM_Y * DIM_Z; // Total number of cells
-		int num_reactions = 12; // Number of reactions (8 Intracellular + 2 Intercellular + 1 transmembranal)
+		int num_reactions = 10; // Number of reactions (8 Intracellular + 2 Intercellular + 2 extra)
 		// 2 extracellular (between the reservoirs) 
 		double max_reaction = 0, reaction_choice, alfa_0 = 0, reaction_value;
 		vector<double> retorno(5);
@@ -590,7 +591,7 @@ public:
 		vector<double> Ca_o_diffusion(18);
 		vector<double> Na_o_diffusion(18);
 
-		double reactions[DIM_Y][DIM_X][DIM_Z][num_reactions+68];
+		double reactions[DIM_Y][DIM_X][DIM_Z][num_reactions+34];
 
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
@@ -646,7 +647,6 @@ public:
 									else
 										reaction_choice = 13;
 								}*/
-
 								alfa_0 += reaction_value;
 							}
 						}
@@ -676,10 +676,10 @@ public:
 
 								alfa_0 += reaction_value;
 							}
-						}  else if (r == 10) {
+						} /* else if (r == 10) {
 							Ca_o_diffusion = C_o_diffusions(tecido->getId(i, j, k));
-							for (int d = 34; d < Ca_o_diffusion.size() + 34; d++) {
-								reaction_value = Ca_o_diffusion[d-34];
+							for (int d = 35; d < Ca_o_diffusion.size() + 35; d++) {
+								reaction_value = Ca_o_diffusion[d-35];
 								reactions[j][i][k][r + d] = reaction_value;
 
 								/*if (reaction_value >= max_reaction) {
@@ -698,15 +698,15 @@ public:
 										reaction_choice = 12;
 									else
 										reaction_choice = 13;
-								}*/
+								}*//*
 
 								alfa_0 += reaction_value;
 							}
 						}
 						 else if (r == 11) {
 							Na_o_diffusion = Na_o_diffusions(tecido->getId(i, j, k));
-							for (int d = 51; d < Na_o_diffusion.size() + 51; d++) {
-								reaction_value = Na_o_diffusion[d - 51];
+							for (int d = 52; d < Na_o_diffusion.size() + 52; d++) {
+								reaction_value = Na_o_diffusion[d - 52];
 								reactions[j][i][k][r + d] = reaction_value;
 
 								/*if (reaction_value >= max_reaction) {
@@ -726,7 +726,7 @@ public:
 									else
 										reaction_choice = 13;
 								}*/
-
+							/*
 								alfa_0 += reaction_value;
 							}
 						}
@@ -746,8 +746,16 @@ public:
 
 							alfa_0 += reaction_value;
 						}
+
 					}
 					// End Reactions >>
+					
+					for (int r = 0; r < num_reactions + 34; r++) {
+						cout << reactions[j][i][k][r] << " ";
+					}
+					cout << endl;
+
+					getchar();
 				}
 			}
 		}
@@ -784,7 +792,7 @@ public:
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
 				for (int k = 0; k < DIM_Z; k++) {
-					for (int r = 0; r < num_reactions + 68; r++) {
+					for (int r = 0; r < num_reactions + 34; r++) {
 						sum_upper += reactions[j][i][k][r];
 
 						if (sum_upper >= alfa_0 * r2) {
@@ -795,7 +803,7 @@ public:
 							for (int x = 0; x < DIM_X && flag == false; x++) {
 								for (int y = 0; y < DIM_Y && flag == false; y++) {
 									for (int z = 0; z < DIM_Z && flag == false; z++) {
-										for (int n = 0; n < num_reactions + 68 && flag == false; n++) {
+										for (int n = 0; n < num_reactions + 34 && flag == false; n++) {
 											if (x == i && y == j && z == k && n == r) {
 												//cout << x << " " << y << " " << z << " " << n << endl;
 												//cout << sum_down << " " << alfa_0 * r2 << " " << sum_upper << endl;
@@ -811,6 +819,7 @@ public:
 							if (sum_down < alfa_0 * r2) {
 								//cout << sum_upper << " " << alfa_0 * r2 << " " << sum_down << endl;
 								retorno[0] = r + 1; // [1, 26]
+								cout << "Retorno: " << retorno[0] << endl;
 								retorno[1] = i;
 								retorno[2] = j;
 								retorno[3] = k;
@@ -841,13 +850,13 @@ int main(){
 
 	// Print tissue
 	tecido.printTissue();
-	tecido.printExTissue();
+	//tecido.printExTissue();
 
 	// DEFININDO A TOPOLOGIA REGULAR DEGREE
 	tecido.regularDegree();
 
-	tecido.set(tx_x, tx_y, tx_z, "C", 0.5);
-	tecido.set(tx_x, tx_y, tx_z, "Na_i", 20000);
+	tecido.set(tx_x, tx_y, tx_z, "C", 0.5*SCALE);
+	tecido.set(tx_x, tx_y, tx_z, "Na_i", 20000*SCALE);
 	tecido.printTissuef(exportfile, 0); // Writes the tissue's initial state to the file
 	// Inicializando o Algoritmo de Gillespie
 	Gillespie gillespie(&tecido);
@@ -898,7 +907,7 @@ int main(){
 
 			// Print Tissue
 			tecido.printTissue();
-			tecido.printExTissue();
+			//tecido.printExTissue();
 			cout << endl;
 			// End Print Tissue
 
