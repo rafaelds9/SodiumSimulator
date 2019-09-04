@@ -3,7 +3,7 @@
 using namespace std;
 
 
-#define SCALE 1
+#define SCALE 0.001
 #define INV_SCALE 1/SCALE
 
 #define DIM_X 5
@@ -43,33 +43,33 @@ public:
 			27phh - 29plh: probabilidades das gap junctions
 		*/
 
-		double v1 = 100; parameters["v1"] = v1;
-		double Y = 0; parameters["Y"] = Y;
-		double vin = 0.05; parameters["vin"] = vin;
-		double VM2 = 15; parameters["VM2"] = VM2;
-		double C = 0.1; parameters["C"] = C;
-		double n = 2.02; parameters["n"] = n;
-		double K2 = 0.1; parameters["K2"] = K2;
-		double VM3 = 40; parameters["VM3"] = VM3; // Porque nao 40, como diz no artigo?
-		double ko = 0.5; parameters["ko"] = ko;
-		double ER = 1.5; parameters["ER"] = ER;
-		double kf = 0.5; parameters["kf"] = kf;
-		double kp = 0.3; parameters["kp"] = kp;
-		double kdeg = 0.08; parameters["kdeg"] = kdeg;
-		double vp = 0.05; parameters["vp"] = vp;
-		double kcaaa = 0.15; parameters["kcaaa"] = kcaaa;
-		double kcai = 0.15; parameters["kcai"] = kcai;
-		double kip3 = 0.1; parameters["kip3"] = kip3;
-		double IP3 = 0.1; parameters["IP3"] = IP3;
-		double q = 4; parameters["q"] = q;
-		double W = 0; parameters["W"] = W;
-		double A = 0; parameters["A"] = A;
-		double kia = 0.5; parameters["kia"] = kia;
+		double v1 = 100*SCALE; parameters["v1"] = v1;
+		double Y = 0*SCALE; parameters["Y"] = Y;
+		double vin = 0.05*SCALE; parameters["vin"] = vin;
+		double VM2 = 15*SCALE; parameters["VM2"] = VM2;
+		double C = 0.1*SCALE; parameters["C"] = C;
+		double n = 2.02*SCALE; parameters["n"] = n;
+		double K2 = 0.1*SCALE; parameters["K2"] = K2;
+		double VM3 = 40*SCALE; parameters["VM3"] = VM3; // Porque nao 40, como diz no artigo?
+		double ko = 0.5*SCALE; parameters["ko"] = ko;
+		double ER = 1.5*SCALE; parameters["ER"] = ER;
+		double kf = 0.5*SCALE; parameters["kf"] = kf;
+		double kp = 0.3*SCALE; parameters["kp"] = kp;
+		double kdeg = 0.08*SCALE; parameters["kdeg"] = kdeg;
+		double vp = 0.05*SCALE; parameters["vp"] = vp;
+		double kcaaa = 0.15*SCALE; parameters["kcaaa"] = kcaaa;
+		double kcai = 0.15*SCALE; parameters["kcai"] = kcai;
+		double kip3 = 0.1*SCALE; parameters["kip3"] = kip3;
+		double IP3 = 0.1*SCALE; parameters["IP3"] = IP3;
+		double q = 4*SCALE; parameters["q"] = q;
+		double W = 0*SCALE; parameters["W"] = W;
+		double A = 0*SCALE; parameters["A"] = A;
+		double kia = 0.5*SCALE; parameters["kia"] = kia;
 		double D = 350 * (4 * PI * diameter_cell / 3.0)/*122500*/; parameters["D"] = D;
-		double l = PI * pow(diameter_cell / 2, 2); parameters["l"] = l;
-		double K = 0.0006; parameters["K"] = K;
-		double ka = 2.5; parameters["ka"] = ka;
-		double m = 2.2; parameters["m"] = m;
+		double l = PI *SCALE * pow(diameter_cell / 2, 2); parameters["l"] = l;
+		double K = 0.0006 *SCALE; parameters["K"] = K;
+		double ka = 2.5*SCALE; parameters["ka"] = ka;
+		double m = 2.2*SCALE; parameters["m"] = m;
 		parameters["phl"] = phl[0];
 		parameters["plh"] = plh[0];
 		parameters["phh"] = phh[0];
@@ -525,8 +525,8 @@ public:
 							}
 						} else if (r == 9) {
 							Na_i_diffusion = Na_i_diffusions(tecido->getId(i, j, k));
-							for (int d = diffusion.size(); d < diffusion.size()+Na_i_diffusion.size(); d++) {
-								reaction_value = Na_i_diffusion[d-diffusion.size()];
+							for (int d = diffusion.size()-1; d < diffusion.size()-1+Na_i_diffusion.size(); d++) {
+								reaction_value = Na_i_diffusion[d-(diffusion.size()-1)];
 								reactions[j][i][k][r + d] = reaction_value;
 
 								/*if (reaction_value >= max_reaction) {
@@ -599,8 +599,8 @@ public:
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
 				for (int k = 0; k < DIM_Z; k++) {
-					for (int r = 0; r <= (num_reactions + 2*(nConnections * 3 - 1)); r++) { //Antes ia de 0 a 26, 10+
-						cout << "R: " << r <<endl;
+					for (int r = 0; r < (num_reactions + 2*(nConnections * 3 - 1)); r++) {
+						// cout << "R: " << r <<endl;
 						sum_upper += reactions[j][i][k][r];
 
 						if (sum_upper >= alfa_0 * r2) {
@@ -611,8 +611,8 @@ public:
 							for (int x = 0; x < DIM_X && flag == false; x++) {
 								for (int y = 0; y < DIM_Y && flag == false; y++) {
 									for (int z = 0; z < DIM_Z && flag == false; z++) {
-										for (int n = 0; n <= (num_reactions +  2*(nConnections * 3 - 1)) && flag == false; n++) { //0 a 44 -> tem que ir
-											cout << "N: " << r <<endl;
+										for (int n = 0; n < (num_reactions +  2*(nConnections * 3 - 1)) && flag == false; n++) { //0 a 43 -> tem que ir
+											// cout << "N: " << r <<endl;
 
 											if (x == i && y == j && z == k && n == r) {
 												//cout << x << " " << y << " " << z << " " << n << endl;
@@ -655,8 +655,8 @@ void simulation(int destination, double frequency, string topologie) {
 	else if (topologie == "LR2") tecido.linkRadius(2);
 	else if (topologie == "LR3") tecido.linkRadius(3);
 
-	tecido.set(tx_x, tx_y, tx_z, "C", 0.5);
-	tecido.set(tx_x, tx_y, tx_z, "Na_i", 17000);
+	tecido.set(tx_x, tx_y, tx_z, "C", 0.5*SCALE);
+	tecido.set(tx_x, tx_y, tx_z, "Na_i", 20000*SCALE);
 
 	// Print tissue
 	tecido.printTissue();
@@ -674,7 +674,7 @@ void simulation(int destination, double frequency, string topologie) {
 	int nConnections = tecido.numberConnections();
 	cout << "Connections per cell: " << nConnections << endl;
 	vector<double> choice(5);
-	vector<int> connections(nConnections), qtd_reactions(8 + (nConnections * 3));
+	vector<int> connections(nConnections), qtd_reactions(8 + 2 * (nConnections * 3));
 	double simulation_time = 200, current_time = 0;
 	int reaction, int_time = 0;
 	bool diffusion_error = false;
@@ -683,6 +683,9 @@ void simulation(int destination, double frequency, string topologie) {
 
 	while (simulation_time > current_time) {
 		choice = gillespie.run();
+
+		// cout << choice[0] << endl;
+		// getchar();
 
 		current_time += (choice[4] * 1000);
 		reaction = choice[0];
@@ -790,7 +793,7 @@ void simulation(int destination, double frequency, string topologie) {
 
 		/* DIFFUSION REACTIONS */
 		// Calcium Diffusion
-		else if(reaction == 9){
+		else if(reaction >= 9 && reaction < 9 + (nConnections * 3)){
 			for (int conn = 0; conn < nConnections; conn++) {
 				if (reaction >= 9 + (conn * 3) && reaction <= 11 + (conn * 3)) {
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
@@ -805,11 +808,11 @@ void simulation(int destination, double frequency, string topologie) {
 				}
 			}
 		}
-
+	
 		// Sodium Diffusion
-		else if(reaction == 10){
+		else {
 			for (int conn = 0; conn < nConnections; conn++) {
-				if (reaction >= 12 + (conn * 3) && reaction <= 14 + (conn * 3)) {
+				if (reaction >= 27 + (conn * 3) && reaction <= 29 + (conn * 3)) {
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
 					if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "Na_i") > tecido.get(connections[conn], "Na_i")) {
@@ -822,7 +825,7 @@ void simulation(int destination, double frequency, string topologie) {
 				}
 			}
 		}
-
+		
 		/* STORAGE OF CALCIUM CONCENTRATION */
 		C_tx.push_back(tecido.get(tx_x, tx_y, tx_z, "C"));
 		C_rx.push_back(tecido.get(tx_x + destination, tx_y, tx_z, "C"));
