@@ -5,7 +5,7 @@ using namespace std;
 
 #define SCALE 0.001
 #define INV_SCALE 1/SCALE
-
+#define QTD_DIFFUSIONS 4
 #define DIM_X 5
 #define DIM_Y 5
 #define DIM_Z 3
@@ -456,16 +456,99 @@ public:
 
 		return diff;
 	}
+	// Reaction 11
+	vector<double> Ca_o_diffusions(int id) {
+		int nConnections = tecido->numberConnections();
+		vector<double> diffusions(nConnections * 3);
+
+		vector<int> connections(nConnections);
+		connections = tecido->getConnections(id);
+		double value;
+
+		for (int i = 0; i < connections.size(); i++){
+			for (int gj = 0; gj < 3; gj++) {
+				if (connections[i] != -1)
+					value = Ca_o_diffusionEquation(id, connections[i], gj);
+				else
+					value = 0;
+
+				diffusions[(3 * i) + gj] = value;
+			}
+		}
+
+		return diffusions;
+	}
+
+	double Ca_o_diffusionEquation(int id1, int id2, int gap_junction) {
+		double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
+		double diff;
+
+		if (tecido->get(id1, "C_o") <= tecido->get(id2, "C_o"))
+			return 0;
+
+		if (gap_junction == 0) {
+			diff = (tecido->get(id1, "D") / vol_cell) * (tecido->get(id1, "C_o") - tecido->get(id2, "C_o")) * tecido->get(id1, "phh");
+		} else if (gap_junction == 1) {
+			diff = (tecido->get(id1, "D") / vol_cell) * (tecido->get(id1, "C_o") - tecido->get(id2, "C_o")) * tecido->get(id1, "phl");
+		} else {
+			diff = (tecido->get(id1, "D") / vol_cell) * (tecido->get(id1, "C_o") - tecido->get(id2, "C_o")) * tecido->get(id1, "plh");
+		}
+
+		return diff;
+	}
+
+	// Reaction 12
+	vector<double> Na_o_diffusions(int id) {
+		int nConnections = tecido->numberConnections();
+		vector<double> diffusions(nConnections * 3);
+
+		vector<int> connections(nConnections);
+		connections = tecido->getConnections(id);
+		double value;
+
+		for (int i = 0; i < connections.size(); i++){
+			for (int gj = 0; gj < 3; gj++) {
+				if (connections[i] != -1)
+					value = Na_o_diffusionEquation(id, connections[i], gj);
+				else
+					value = 0;
+
+				diffusions[(3 * i) + gj] = value;
+			}
+		}
+
+		return diffusions;
+	}
+
+	double Na_o_diffusionEquation(int id1, int id2, int gap_junction) {
+		double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
+		double diff;
+
+		if (tecido->get(id1, "Na_o") <= tecido->get(id2, "Na_o"))
+			return 0;
+
+		if (gap_junction == 0) {
+			diff = (tecido->get(id1, "NaD") / vol_cell) * (tecido->get(id1, "Na_o") - tecido->get(id2, "Na_o")) * tecido->get(id1, "phh");
+		} else if (gap_junction == 1) {
+			diff = (tecido->get(id1, "NaD") / vol_cell) * (tecido->get(id1, "Na_o") - tecido->get(id2, "Na_o")) * tecido->get(id1, "phl");
+		} else {
+			diff = (tecido->get(id1, "NaD") / vol_cell) * (tecido->get(id1, "Na_o") - tecido->get(id2, "Na_o")) * tecido->get(id1, "plh");
+		}
+
+		return diff;
+	}
 
 	vector<double> run() {
 		int nConnections = tecido->numberConnections();
 		int NC = DIM_X * DIM_Y * DIM_Z; // Total number of cells
-		int num_reactions = 10; // Number of reactions (7 Intracellular + 2 Intercelular)  	/* Por que uma a mais? */
+		int num_reactions = 12; // Number of reactions (7 Intracellular + 2 Intercellular +2 extracellular)  	/* Por que uma a mais? */
 		double max_reaction = 0, reaction_choice, alfa_0 = 0, reaction_value;
 		vector<double> retorno(5);
 		vector<double> diffusion(nConnections * 3);
 		vector<double> Na_i_diffusion(nConnections * 3);
-		double reactions[DIM_Y][DIM_X][DIM_Z][num_reactions + 2*(nConnections * 3 - 1)]; //0 a 43
+		vector<double> Ca_o_diffusion(nConnections * 3);
+		vector<double> Na_o_diffusion(nConnections * 3);
+		double reactions[DIM_Y][DIM_X][DIM_Z][num_reactions + QTD_DIFFUSIONS*(nConnections * 3 - 1)]; //0 a 43
 
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
@@ -501,25 +584,7 @@ public:
 							diffusion = diffusions(tecido->getId(i, j, k));
 							for (int d = 0; d < diffusion.size(); d++) {
 								reaction_value = diffusion[d];
-								reactions[j][i][k][r + d] = reaction_value;
-
-								/*if (reaction_value >= max_reaction) {
-									max_reaction = reaction_value;
-									cell[0] = j; cell[1] = i; cell[2] = k;
-
-									if (d >= 0 && d <= 2)
-										reaction_choice = 8;
-									else if (d >= 3 && d <= 5)
-										reaction_choice = 9;
-									else if (d >= 6 && d <= 8)
-										reaction_choice = 10;
-									else if (d >= 9 && d <= 11)
-										reaction_choice = 11;
-									else if (d >= 12 && d <= 14)
-										reaction_choice = 12;
-									else
-										reaction_choice = 13;
-								}*/
+								reactions[j][i][k][r + d] = reaction_value; // 8 a 25
 
 								alfa_0 += reaction_value;
 							}
@@ -527,37 +592,32 @@ public:
 							Na_i_diffusion = Na_i_diffusions(tecido->getId(i, j, k));
 							for (int d = diffusion.size()-1; d < diffusion.size()-1+Na_i_diffusion.size(); d++) {
 								reaction_value = Na_i_diffusion[d-(diffusion.size()-1)];
-								reactions[j][i][k][r + d] = reaction_value;
+								reactions[j][i][k][r + d] = reaction_value; // 26 a 43
 
-								/*if (reaction_value >= max_reaction) {
-									max_reaction = reaction_value;
-									cell[0] = j; cell[1] = i; cell[2] = k;
+								alfa_0 += reaction_value;
+							}
+						}  else if (r == 10) { // Parte nova
+							Ca_o_diffusion = Ca_o_diffusions(tecido->getId(i, j, k));
+							for (int d = diffusion.size()-1+Na_i_diffusion.size()-1;
+							 d < diffusion.size()-1+Na_i_diffusion.size()-1+ Ca_o_diffusion.size(); d++) {
+								reaction_value = Ca_o_diffusion[d-(diffusion.size()-1+Na_i_diffusion.size())];
+								reactions[j][i][k][r + d] = reaction_value; // 44 a 61
 
-									if (d >= 0 && d <= 2)
-										reaction_choice = 8;
-									else if (d >= 3 && d <= 5)
-										reaction_choice = 9;
-									else if (d >= 6 && d <= 8)
-										reaction_choice = 10;
-									else if (d >= 9 && d <= 11)
-										reaction_choice = 11;
-									else if (d >= 12 && d <= 14)
-										reaction_choice = 12;
-									else
-										reaction_choice = 13;
-								}*/
+								alfa_0 += reaction_value;
+							}
+						}  else if (r == 11) {
+							Na_o_diffusion = Na_o_diffusions(tecido->getId(i, j, k));
+							for (int d = diffusion.size()-1+Na_i_diffusion.size()-1+Ca_o_diffusion.size()-1;
+							 d < diffusion.size()-1+Na_i_diffusion.size()-1+ Ca_o_diffusion.size()-1+Na_o_diffusion.size(); d++) {
+								reaction_value = Na_o_diffusion[d-(diffusion.size()-1+Na_i_diffusion.size()-1+Ca_o_diffusion.size()-1)];
+								reactions[j][i][k][r + d] = reaction_value; //62 até 79
 
 								alfa_0 += reaction_value;
 							}
 						}
 						
 
-						if ((r != 8) || (r != 9)) {
-							/*if (reaction_value >= max_reaction) {
-								max_reaction = reaction_value;
-								cell[0] = j; cell[1] = i; cell[2] = k;
-								reaction_choice = r;
-							}*/
+						if(r < 8){
 
 							alfa_0 += reaction_value;
 						}
@@ -599,7 +659,7 @@ public:
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
 				for (int k = 0; k < DIM_Z; k++) {
-					for (int r = 0; r < (num_reactions + 2*(nConnections * 3 - 1)); r++) {
+					for (int r = 0; r < (num_reactions + QTD_DIFFUSIONS*(nConnections * 3 - 1)); r++) {
 						// cout << "R: " << r <<endl;
 						sum_upper += reactions[j][i][k][r];
 
@@ -611,7 +671,7 @@ public:
 							for (int x = 0; x < DIM_X && flag == false; x++) {
 								for (int y = 0; y < DIM_Y && flag == false; y++) {
 									for (int z = 0; z < DIM_Z && flag == false; z++) {
-										for (int n = 0; n < (num_reactions +  2*(nConnections * 3 - 1)) && flag == false; n++) { //0 a 43 -> tem que ir
+										for (int n = 0; n < (num_reactions +  QTD_DIFFUSIONS*(nConnections * 3 - 1)) && flag == false; n++) { //0 a 43 -> tem que ir
 											// cout << "N: " << r <<endl;
 
 											if (x == i && y == j && z == k && n == r) {
@@ -674,7 +734,7 @@ void simulation(int destination, double frequency, string topologie) {
 	int nConnections = tecido.numberConnections();
 	cout << "Connections per cell: " << nConnections << endl;
 	vector<double> choice(5);
-	vector<int> connections(nConnections), qtd_reactions(8 + 2 * (nConnections * 3));
+	vector<int> connections(nConnections), qtd_reactions(8 + QTD_DIFFUSIONS * (nConnections * 3));
 	double simulation_time = 200, current_time = 0;
 	int reaction, int_time = 0;
 	bool diffusion_error = false;
@@ -739,9 +799,11 @@ void simulation(int destination, double frequency, string topologie) {
 				}
 			}
 
-			// Calcium oscillations
-			if (int_time % ((int) (1 / frequency)) == 0)
-				tecido.accumulate(tx_x, tx_y, tx_z, "C", 0.5);
+			// Calcium and sodium oscillations
+			if (int_time % ((int) (1 / frequency)) == 0){
+				tecido.accumulate(tx_x, tx_y, tx_z, "C", 0.5*SCALE);
+				tecido.accumulate(tx_x, tx_y, tx_z, "Na_i", 20000*SCALE);
+			}
 		}
 
 		/* INTRACELULAR REACTIONS */
@@ -792,7 +854,7 @@ void simulation(int destination, double frequency, string topologie) {
 		}
 
 		/* DIFFUSION REACTIONS */
-		// Calcium Diffusion
+		// Citosolic Calcium Diffusion
 		else if(reaction >= 9 && reaction < 9 + (nConnections * 3)){
 			for (int conn = 0; conn < nConnections; conn++) {
 				if (reaction >= 9 + (conn * 3) && reaction <= 11 + (conn * 3)) {
@@ -807,10 +869,8 @@ void simulation(int destination, double frequency, string topologie) {
 					}
 				}
 			}
-		}
-	
-		// Sodium Diffusion
-		else {
+		}// Citosolic Sodium Diffusion
+		 else if (reaction >= 10 && reaction < 10 + (nConnections * 3)){
 			for (int conn = 0; conn < nConnections; conn++) {
 				if (reaction >= 27 + (conn * 3) && reaction <= 29 + (conn * 3)) {
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
@@ -824,7 +884,37 @@ void simulation(int destination, double frequency, string topologie) {
 					}
 				}
 			}
-		}
+		} // Extracellular Calcium Diffusion
+			else if (reaction >= 11 && reaction < 11 + (nConnections * 3)){
+			for (int conn = 0; conn < nConnections; conn++) {
+				if (reaction >= 45 + (conn * 3) && reaction <= 47 + (conn * 3)) {
+					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+
+					if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "Ca_o") > tecido.get(connections[conn], "Ca_o")) {
+						tecido.accumulate(choice[1], choice[2], choice[3], "Ca_o", -ALPHA);
+						tecido.accumulate(connections[conn], "Ca_o", ALPHA);
+					} else {
+						cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[conn] << endl;
+						diffusion_error = true;
+					}
+				}
+			}
+		} // Extracellular Sodium Diffusion
+		else{
+			for (int conn = 0; conn < nConnections; conn++) {
+				if (reaction >= 63 + (conn * 3) && reaction <= 65 + (conn * 3)) {
+					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+
+					if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "Na_o") > tecido.get(connections[conn], "Na_o")) {
+						tecido.accumulate(choice[1], choice[2], choice[3], "Na_o", -ALPHA);
+						tecido.accumulate(connections[conn], "Na_o", ALPHA);
+					} else {
+						cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[conn] << endl;
+						diffusion_error = true;
+					}
+				}
+			}
+		} 
 		
 		/* STORAGE OF CALCIUM CONCENTRATION */
 		C_tx.push_back(tecido.get(tx_x, tx_y, tx_z, "C"));
@@ -853,7 +943,7 @@ void simulation(int destination, double frequency, string topologie) {
 /* MAIN */
 int main(){
 	int destination = 1;
-	double frequency = 0.000001;
+	double frequency = 0.00000001;
 	string topologie = "RD";
 	
 	//for (int dest = 1; dest <= 1; dest++) {
