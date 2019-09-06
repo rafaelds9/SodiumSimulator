@@ -3,12 +3,12 @@
 using namespace std;
 
 
-#define SCALE 0.001
+#define SCALE 1
 #define INV_SCALE 1/SCALE
 #define QTD_DIFFUSIONS 4
 #define DIM_X 5
 #define DIM_Y 5
-#define DIM_Z 3
+#define DIM_Z 5
 #define ALPHA 0.01
 #define PI 3.14159265359
 
@@ -74,7 +74,7 @@ public:
 		parameters["plh"] = plh[0];
 		parameters["phh"] = phh[0];
 
-		double Na_i = SCALE*15000;  parameters["Na_i"] = Na_i; //Langer3, Chatton 2016 - Colocar uma relação
+		double Na_i = SCALE*0.1;  parameters["Na_i"] = Na_i; //Langer3, Chatton 2016 - Colocar uma relação
 		double Na_o = SCALE*150000/(DIM_X * DIM_Y * DIM_Z);  parameters["Na_o"] = Na_o; //chatton 2016
 		double NaD = (4/3)*PI*diameter_cell*6000; parameters["NaD"] = NaD; 
 		double C_o = SCALE*2300/(DIM_X * DIM_Y * DIM_Z); parameters["C_o"] = C_o; //Kirischuk 1997
@@ -157,7 +157,18 @@ public:
 		cout << endl;
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
+				cout << fixed << setprecision(2) << get(i, j, trunc(DIM_Z / 2), "C") << ":";
 				cout << fixed << setprecision(2) << get(i, j, trunc(DIM_Z / 2), "Na_i") << "  ";
+
+			}
+			cout << endl;
+		}
+		cout << endl << endl;
+		for (int i = 0; i < DIM_X; i++) {
+			for (int j = 0; j < DIM_Y; j++) {
+				cout << fixed << setprecision(2) << get(i, j, trunc(DIM_Z / 2), "C_o") << ":";
+				cout << fixed << setprecision(2) << get(i, j, trunc(DIM_Z / 2), "Na_o") << "  ";
+
 			}
 			cout << endl;
 		}
@@ -596,11 +607,11 @@ public:
 
 								alfa_0 += reaction_value;
 							}
-						}  else if (r == 10) { // Parte nova
+						}  else if (r == 10) {
 							Ca_o_diffusion = Ca_o_diffusions(tecido->getId(i, j, k));
 							for (int d = diffusion.size()-1+Na_i_diffusion.size()-1;
 							 d < diffusion.size()-1+Na_i_diffusion.size()-1+ Ca_o_diffusion.size(); d++) {
-								reaction_value = Ca_o_diffusion[d-(diffusion.size()-1+Na_i_diffusion.size())];
+								reaction_value = Ca_o_diffusion[d-(diffusion.size()-1+Na_i_diffusion.size()-1)];
 								reactions[j][i][k][r + d] = reaction_value; // 44 a 61
 
 								alfa_0 += reaction_value;
@@ -715,8 +726,10 @@ void simulation(int destination, double frequency, string topologie) {
 	else if (topologie == "LR2") tecido.linkRadius(2);
 	else if (topologie == "LR3") tecido.linkRadius(3);
 
-	tecido.set(tx_x, tx_y, tx_z, "C", 0.5*SCALE);
-	tecido.set(tx_x, tx_y, tx_z, "Na_i", 20000*SCALE);
+	//tecido.set(tx_x, tx_y, tx_z, "C", 0.5*SCALE);
+	//tecido.set(tx_x, tx_y, tx_z, "Na_i", 0.5*SCALE);
+	tecido.set(tx_x, tx_y, tx_z, "C_o", 90*SCALE);
+	//tecido.set(tx_x, tx_y, tx_z, "Na_o", 2000*SCALE);
 
 	// Print tissue
 	tecido.printTissue();
@@ -802,10 +815,10 @@ void simulation(int destination, double frequency, string topologie) {
 			// Calcium and sodium oscillations
 			if (int_time % ((int) (1 / frequency)) == 0){
 				tecido.accumulate(tx_x, tx_y, tx_z, "C", 0.5*SCALE);
-				tecido.accumulate(tx_x, tx_y, tx_z, "Na_i", 20000*SCALE);
+				//tecido.accumulate(tx_x, tx_y, tx_z, "Na_i", 20000*SCALE);
 			}
 		}
-
+		//cout << "Chosen reaction: " << reaction << endl;
 		/* INTRACELULAR REACTIONS */
 		if (reaction == 1) {
 			tecido.accumulate(choice[1], choice[2], choice[3], "C", ALPHA);
@@ -855,9 +868,9 @@ void simulation(int destination, double frequency, string topologie) {
 
 		/* DIFFUSION REACTIONS */
 		// Citosolic Calcium Diffusion
-		else if(reaction >= 9 && reaction < 9 + (nConnections * 3)){
+		 else if((reaction >= 9) && (reaction < 9 + (nConnections * 3))){
 			for (int conn = 0; conn < nConnections; conn++) {
-				if (reaction >= 9 + (conn * 3) && reaction <= 11 + (conn * 3)) {
+				if (reaction >= 9 + (conn * 3) && reaction <= 11 + (conn * 3)) { // Os erros estão possivelmente nessas linhas - Aqui cai quando é RD (só)
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
 					if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[conn], "C")) {
@@ -870,11 +883,12 @@ void simulation(int destination, double frequency, string topologie) {
 				}
 			}
 		}// Citosolic Sodium Diffusion
-		 else if (reaction >= 10 && reaction < 10 + (nConnections * 3)){
+		 else if ((reaction >= 9 + (nConnections * 3)) && (reaction < 9 + 2*(nConnections * 3))){
 			for (int conn = 0; conn < nConnections; conn++) {
 				if (reaction >= 27 + (conn * 3) && reaction <= 29 + (conn * 3)) {
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
-
+					// cout <<"Choice: " << choice[1]<< "-" << choice[2]<< "-"  << choice[3] << endl;
+					// getchar();
 					if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "Na_i") > tecido.get(connections[conn], "Na_i")) {
 						tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", -ALPHA);
 						tecido.accumulate(connections[conn], "Na_i", ALPHA);
@@ -885,7 +899,7 @@ void simulation(int destination, double frequency, string topologie) {
 				}
 			}
 		} // Extracellular Calcium Diffusion
-			else if (reaction >= 11 && reaction < 11 + (nConnections * 3)){
+		 else if ((reaction >= 9 + 2*(nConnections * 3)) && (reaction < 9 + 3*(nConnections * 3))){ //Não tá caindo aqui nem em RD
 			for (int conn = 0; conn < nConnections; conn++) {
 				if (reaction >= 45 + (conn * 3) && reaction <= 47 + (conn * 3)) {
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
