@@ -871,6 +871,7 @@ void simulation(int destination, double frequency, string topologie) {
 		 else if((reaction >= 9) && (reaction < 9 + (nConnections * 3))){
 			for (int conn = 0; conn < nConnections; conn++) {
 				if (reaction >= 9 + (conn * 3) && reaction <= 11 + (conn * 3)) { // Os erros estão possivelmente nessas linhas - Aqui cai quando é RD (só)
+																				//Possivelmente devido aos índices (27 e 29 abaixo)
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
 					if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[conn], "C")) {
