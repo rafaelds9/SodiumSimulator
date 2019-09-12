@@ -8,7 +8,7 @@ using namespace std;
 #define QTD_DIFFUSIONS 4
 #define DIM_X 5
 #define DIM_Y 5
-#define DIM_Z 5
+#define DIM_Z 1
 #define ALPHA 0.01
 #define PI 3.14159265359
 
@@ -158,7 +158,7 @@ public:
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
 				cout << fixed << setprecision(2) << get(i, j, trunc(DIM_Z / 2), "C") << ":";
-				cout << fixed << setprecision(2) << get(i, j, trunc(DIM_Z / 2), "Na_i") << "  ";
+				cout << fixed << setprecision(2) << get(i, j, trunc(DIM_Z / 2), "C_o") << "  ";
 
 			}
 			cout << endl;
@@ -166,7 +166,7 @@ public:
 		cout << endl << endl;
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
-				cout << fixed << setprecision(2) << get(i, j, trunc(DIM_Z / 2), "C_o") << ":";
+				cout << fixed << setprecision(2) << get(i, j, trunc(DIM_Z / 2), "Na_i") << ":";
 				cout << fixed << setprecision(2) << get(i, j, trunc(DIM_Z / 2), "Na_o") << "  ";
 
 			}
@@ -634,6 +634,11 @@ public:
 						}
 					}
 					// End Reactions >>
+					
+					//DEBUG
+					// for (int r = 0; r < num_reactions + QTD_DIFFUSIONS*(nConnections * 3 - 1); r++) 
+					// 	cout << reactions[j][i][k][r]<<" ";
+					// cout << endl; 
 				}
 			}
 		}
@@ -686,8 +691,8 @@ public:
 											// cout << "N: " << r <<endl;
 
 											if (x == i && y == j && z == k && n == r) {
-												//cout << x << " " << y << " " << z << " " << n << endl;
-												//cout << sum_down << " " << alfa_0 * r2 << " " << sum_upper << endl;
+												// cout << x << " " << y << " " << z << " " << n << endl;
+												// cout << sum_down << " " << alfa_0 * r2 << " " << sum_upper << endl;
 												flag = true;
 											} else {
 												sum_down += reactions[y][x][z][n];
@@ -720,16 +725,26 @@ void simulation(int destination, double frequency, string topologie) {
 	int tx_x = trunc(DIM_X / 2);
 	int tx_y = trunc(DIM_Y / 2);
 	int tx_z = trunc(DIM_Z / 2);
+	int radius = 0;
 
 	// DEFININDO A TOPOLOGIA DO TECIDO
-	if (topologie == "RD") tecido.regularDegree();
-	else if (topologie == "LR2") tecido.linkRadius(2);
-	else if (topologie == "LR3") tecido.linkRadius(3);
+	if (topologie == "RD"){
+		tecido.regularDegree();
+		radius = 1;
+	}
+	else if (topologie == "LR2"){ 
+		tecido.linkRadius(2);
+		radius = 2;
+	}
+	else if (topologie == "LR3"){
+		tecido.linkRadius(3);
+		radius = 3;
+	}
 
 	//tecido.set(tx_x, tx_y, tx_z, "C", 0.5*SCALE);
-	//tecido.set(tx_x, tx_y, tx_z, "Na_i", 0.5*SCALE);
-	tecido.set(tx_x, tx_y, tx_z, "C_o", 90*SCALE);
-	//tecido.set(tx_x, tx_y, tx_z, "Na_o", 2000*SCALE);
+	tecido.set(tx_x, tx_y, tx_z, "Na_i", 0.5*SCALE);
+	//tecido.set(tx_x, tx_y, tx_z, "C_o", 150*SCALE);
+	// tecido.set(tx_x, tx_y, tx_z, "Na_o", 10000*SCALE);
 
 	// Print tissue
 	tecido.printTissue();
@@ -756,9 +771,12 @@ void simulation(int destination, double frequency, string topologie) {
 
 	while (simulation_time > current_time) {
 		choice = gillespie.run();
-
-		// cout << choice[0] << endl;
-		// getchar();
+		//DEBUG
+		cout << "Reaction: " << choice[0] << endl;
+		// Print Tissue
+		tecido.printTissue();
+		cout << endl;
+		getchar();
 
 		current_time += (choice[4] * 1000);
 		reaction = choice[0];
@@ -868,8 +886,9 @@ void simulation(int destination, double frequency, string topologie) {
 
 		/* DIFFUSION REACTIONS */
 		// Citosolic Calcium Diffusion
-		 else if((reaction >= 9) && (reaction < 9 + (nConnections * 3))){
-			for (int conn = 0; conn < nConnections; conn++) {
+		 else if(reaction >= 9 && reaction <= 9 + (nConnections - 1) * 3){
+			//cout << "Intracellular reaction of calcium\n";
+			for (int conn = 0; conn < nConnections; conn++) { // 9 a 24, 9 a 42, 9 a 60
 				if (reaction >= 9 + (conn * 3) && reaction <= 11 + (conn * 3)) { // Os erros estão possivelmente nessas linhas - Aqui cai quando é RD (só)
 																				//Possivelmente devido aos índices (27 e 29 abaixo)
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
@@ -884,7 +903,8 @@ void simulation(int destination, double frequency, string topologie) {
 				}
 			}
 		}// Citosolic Sodium Diffusion
-		 else if ((reaction >= 9 + (nConnections * 3)) && (reaction < 9 + 2*(nConnections * 3))){
+		 else if (reaction >= 10 + (nConnections - 1) * 3 && reaction < 10 + (nConnections * 2 - 1) * 3){
+			//cout << "Intracellular reaction of sodium\n";
 			for (int conn = 0; conn < nConnections; conn++) {
 				if (reaction >= 27 + (conn * 3) && reaction <= 29 + (conn * 3)) {
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
@@ -900,22 +920,25 @@ void simulation(int destination, double frequency, string topologie) {
 				}
 			}
 		} // Extracellular Calcium Diffusion
-		 else if ((reaction >= 9 + 2*(nConnections * 3)) && (reaction < 9 + 3*(nConnections * 3))){ //Não tá caindo aqui nem em RD
+		 else if (reaction >= 10 + (nConnections * 2 - 1) * 3 && reaction < 10 + (nConnections * 3 - 1) * 3){
+			// cout << "Extracellular reaction of calcium\n";
 			for (int conn = 0; conn < nConnections; conn++) {
 				if (reaction >= 45 + (conn * 3) && reaction <= 47 + (conn * 3)) {
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
-					if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "Ca_o") > tecido.get(connections[conn], "Ca_o")) {
-						tecido.accumulate(choice[1], choice[2], choice[3], "Ca_o", -ALPHA);
-						tecido.accumulate(connections[conn], "Ca_o", ALPHA);
+					if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "C_o") > tecido.get(connections[conn], "C_o")) {
+						tecido.accumulate(choice[1], choice[2], choice[3], "C_o", -ALPHA);
+						tecido.accumulate(connections[conn], "C_o", ALPHA);
 					} else {
 						cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[conn] << endl;
+						cout << tecido.get(choice[1], choice[2], choice[3], "C_o") << " " << tecido.get(connections[conn], "C_o") << endl;
 						diffusion_error = true;
 					}
 				}
 			}
 		} // Extracellular Sodium Diffusion
 		else{
+			//cout << "Extracellular reaction of sodium\n";
 			for (int conn = 0; conn < nConnections; conn++) {
 				if (reaction >= 63 + (conn * 3) && reaction <= 65 + (conn * 3)) {
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
@@ -957,9 +980,11 @@ void simulation(int destination, double frequency, string topologie) {
 
 /* MAIN */
 int main(){
+
+
 	int destination = 1;
 	double frequency = 0.00000001;
-	string topologie = "RD";
+	string topologie = "LR3";
 	
 	//for (int dest = 1; dest <= 1; dest++) {
 	//	simulation(dest, frequency, topologie);
