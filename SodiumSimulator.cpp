@@ -74,7 +74,7 @@ public:
 		parameters["plh"] = plh[0];
 		parameters["phh"] = phh[0];
 
-		double Na_i = SCALE*0.1;  parameters["Na_i"] = Na_i; //Langer3, Chatton 2016 - Colocar uma relação
+		double Na_i = SCALE*2000;  parameters["Na_i"] = Na_i; //Langer3, Chatton 2016 - Colocar uma relação
 		double Na_o = SCALE*150000/(DIM_X * DIM_Y * DIM_Z);  parameters["Na_o"] = Na_o; //chatton 2016
 		double NaD = (4/3)*PI*diameter_cell*6000; parameters["NaD"] = NaD; 
 		double C_o = SCALE*2300/(DIM_X * DIM_Y * DIM_Z); parameters["C_o"] = C_o; //Kirischuk 1997
@@ -709,7 +709,8 @@ public:
 								retorno[2] = j;
 								retorno[3] = k;
 								retorno[4] = tau;
-
+								// cout << "Reaction: " << r+1 <<endl;
+								// cout << fixed << setprecision(10) << "Tau: " << tau <<endl;
 								return retorno;
 							}
 						}
@@ -741,9 +742,10 @@ void simulation(int destination, double frequency, string topologie) {
 		radius = 3;
 	}
 
-	//tecido.set(tx_x, tx_y, tx_z, "C", 0.5*SCALE);
-	tecido.set(tx_x, tx_y, tx_z, "Na_i", 0.5*SCALE);
-	//tecido.set(tx_x, tx_y, tx_z, "C_o", 150*SCALE);
+	// SETTING THE VALUES
+	tecido.set(tx_x, tx_y, tx_z, "C", 0.5*SCALE);
+	tecido.set(tx_x, tx_y, tx_z, "Na_i", 10000*SCALE);
+	// tecido.set(tx_x, tx_y, tx_z, "C_o", 150*SCALE);
 	// tecido.set(tx_x, tx_y, tx_z, "Na_o", 10000*SCALE);
 
 	// Print tissue
@@ -771,16 +773,18 @@ void simulation(int destination, double frequency, string topologie) {
 
 	while (simulation_time > current_time) {
 		choice = gillespie.run();
-		//DEBUG
-		cout << "Reaction: " << choice[0] << endl;
+
 		// Print Tissue
-		tecido.printTissue();
-		cout << endl;
-		getchar();
+		// tecido.printTissue();
+		// cout << endl;
+		
 
 		current_time += (choice[4] * 1000);
 		reaction = choice[0];
 
+		//DEBUG
+		// cout << "Reaction: " << choice[0] << endl;
+		// getchar();
 		diffusion_error = false;
 		qtd_reactions[reaction - 1]++;
 
@@ -886,13 +890,12 @@ void simulation(int destination, double frequency, string topologie) {
 
 		/* DIFFUSION REACTIONS */
 		// Citosolic Calcium Diffusion
-		 else if(reaction >= 9 && reaction <= 9 + (nConnections - 1) * 3){
+		 else if(reaction >= 9 && reaction < 9 + nConnections * 3){
 			//cout << "Intracellular reaction of calcium\n";
 			for (int conn = 0; conn < nConnections; conn++) { // 9 a 24, 9 a 42, 9 a 60
 				if (reaction >= 9 + (conn * 3) && reaction <= 11 + (conn * 3)) { // Os erros estão possivelmente nessas linhas - Aqui cai quando é RD (só)
 																				//Possivelmente devido aos índices (27 e 29 abaixo)
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
-
 					if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "C") > tecido.get(connections[conn], "C")) {
 						tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
 						tecido.accumulate(connections[conn], "C", ALPHA);
@@ -903,13 +906,18 @@ void simulation(int destination, double frequency, string topologie) {
 				}
 			}
 		}// Citosolic Sodium Diffusion
-		 else if (reaction >= 10 + (nConnections - 1) * 3 && reaction < 10 + (nConnections * 2 - 1) * 3){
-			//cout << "Intracellular reaction of sodium\n";
+		 else if (reaction >= 9 + nConnections * 3 && reaction < 9 + nConnections * 3 * 2){
+			//cout << "Intracellular reaction of sodium\n"; // 25 a 42, 43 a 78, 61 a 114 
 			for (int conn = 0; conn < nConnections; conn++) {
-				if (reaction >= 27 + (conn * 3) && reaction <= 29 + (conn * 3)) {
+				if (reaction >= 9+nConnections*3 + (conn * 3) && reaction <= (9+nConnections*3+2) + (conn * 3)) { //27-42+29-44
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+					// for(int i=0; i< connections.size();i++)
+					// 	cout<<connections[i] << " ";
+					// cout << endl;
 					// cout <<"Choice: " << choice[1]<< "-" << choice[2]<< "-"  << choice[3] << endl;
+					// cout << "Teste: " << connections[conn] << endl; //Tá sempre caindo em menos -1
 					// getchar();
+					
 					if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "Na_i") > tecido.get(connections[conn], "Na_i")) {
 						tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", -ALPHA);
 						tecido.accumulate(connections[conn], "Na_i", ALPHA);
@@ -920,10 +928,10 @@ void simulation(int destination, double frequency, string topologie) {
 				}
 			}
 		} // Extracellular Calcium Diffusion
-		 else if (reaction >= 10 + (nConnections * 2 - 1) * 3 && reaction < 10 + (nConnections * 3 - 1) * 3){
-			// cout << "Extracellular reaction of calcium\n";
+		 else if (reaction >= 9 + nConnections * 3 * 2 && reaction < 9 + nConnections * 3 * 3){
+			// cout << "Extracellular reaction of calcium\n"; // 43 a 60, 79 a 114, 117 a 170
 			for (int conn = 0; conn < nConnections; conn++) {
-				if (reaction >= 45 + (conn * 3) && reaction <= 47 + (conn * 3)) {
+				if (reaction >= 9+nConnections*6 + (conn * 3) && reaction <= (9+nConnections*6+2) + (conn * 3)) {
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
 					if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "C_o") > tecido.get(connections[conn], "C_o")) {
@@ -931,16 +939,15 @@ void simulation(int destination, double frequency, string topologie) {
 						tecido.accumulate(connections[conn], "C_o", ALPHA);
 					} else {
 						cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[conn] << endl;
-						cout << tecido.get(choice[1], choice[2], choice[3], "C_o") << " " << tecido.get(connections[conn], "C_o") << endl;
 						diffusion_error = true;
 					}
 				}
 			}
 		} // Extracellular Sodium Diffusion
-		else{
+		else {
 			//cout << "Extracellular reaction of sodium\n";
 			for (int conn = 0; conn < nConnections; conn++) {
-				if (reaction >= 63 + (conn * 3) && reaction <= 65 + (conn * 3)) {
+				if (reaction >= (9+nConnections*9) + (conn * 3) && reaction <= (9+nConnections*9+2) + (conn * 3)) {
 					connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
 					if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "Na_o") > tecido.get(connections[conn], "Na_o")) {
