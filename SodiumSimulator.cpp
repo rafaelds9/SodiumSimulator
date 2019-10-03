@@ -76,7 +76,7 @@ public:
 
 		double Na_i = SCALE*2000;  parameters["Na_i"] = Na_i; //Langer3, Chatton 2016 - Colocar uma relação
 		double Na_o = SCALE*150000/(DIM_X * DIM_Y * DIM_Z);  parameters["Na_o"] = Na_o; //chatton 2016
-		double NaD = (4/3)*PI*diameter_cell*6000; parameters["NaD"] = NaD; 
+		double NaD = (4/3)*PI*diameter_cell*600; parameters["NaD"] = NaD; 
 		double C_o = SCALE*2300/(DIM_X * DIM_Y * DIM_Z); parameters["C_o"] = C_o; //Kirischuk 1997
 		double Vm = -80; parameters["Vm"] = Vm; //Verify this value later - Kirischuk 2012
 
@@ -730,10 +730,212 @@ public:
 					}
 					// End Reactions >>
 					
-					//DEBUG
-					// for (int r = 0; r < num_reactions + QTD_DIFFUSIONS*(nConnections * 3 - 1); r++) 
-					// 	cout << reactions[j][i][k][r]<<" ";
-					// cout << endl; 
+				}
+			}
+		}
+
+
+		// for (int i = 0; i < DIM_X; i++) {
+		// 	for (int j = 0; j < DIM_Y; j++) {
+		// 		for (int k = 0; k < DIM_Z; k++) {
+		// 			cout << tecido->getId(i, j, k) << ": ";
+		// 			for (int r = 0; r < num_reactions; r++) {
+		// 				cout << reactions[i][j][k][r] << " ";
+		// 			}
+		// 			cout << endl;
+		// 		}
+		// 	}
+		// }
+
+
+		// Gerando dois números aleatórios: r1 e r2
+		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+		std::default_random_engine generator (seed);
+		std::uniform_real_distribution<double> distribution (0.0,1.0);
+
+		double r1 = distribution(generator);
+		double r2 = distribution(generator);
+
+		// Calculando o tempo tau
+		double tau = (1 / alfa_0) * log(1 / r1);
+
+		// Definindo a reação que será executada
+		double sum_upper = 0, sum_down = 0;
+		bool flag = false;
+
+		for (int i = 0; i < DIM_X; i++) {
+			for (int j = 0; j < DIM_Y; j++) {
+				for (int k = 0; k < DIM_Z; k++) {
+					for (int r = 0; r < (num_reactions + (nConnections * 3 - 1)); r++) {
+						// cout << "R: " << r <<endl;
+						sum_upper += reactions[j][i][k][r];
+
+						if (sum_upper >= alfa_0 * r2) {
+							//cout << i << " " << j << " " << k << " " << r << endl;
+
+							flag = false;
+							sum_down = 0;
+							for (int x = 0; x < DIM_X && flag == false; x++) {
+								for (int y = 0; y < DIM_Y && flag == false; y++) {
+									for (int z = 0; z < DIM_Z && flag == false; z++) {
+										for (int n = 0; n < (num_reactions +  (nConnections * 3 - 1)) && flag == false; n++) { //0 a 43 -> tem que ir
+											// cout << "N: " << r <<endl;
+
+											if (x == i && y == j && z == k && n == r) {
+												// cout << x << " " << y << " " << z << " " << n << endl;
+												// cout << sum_down << " " << alfa_0 * r2 << " " << sum_upper << endl;
+												flag = true;
+											} else {
+												sum_down += reactions[y][x][z][n];
+											}
+										}
+									}
+								}
+							}
+
+							if (sum_down < alfa_0 * r2) {
+								//cout << sum_upper << " " << alfa_0 * r2 << " " << sum_down << endl;
+								retorno[0] = r + 1; // [1, 26]
+								retorno[1] = i;
+								retorno[2] = j;
+								retorno[3] = k;
+								retorno[4] = tau;
+								// cout << "Reaction: " << r+1 <<endl;
+								// cout << fixed << setprecision(10) << "Tau: " << tau <<endl;
+								return retorno;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	vector<double> sodiumExtra() {
+		int nConnections = tecido->numberConnections();
+		int NC = DIM_X * DIM_Y * DIM_Z; // Total number of cells
+		int num_reactions = 1; 
+		double max_reaction = 0, reaction_choice, alfa_0 = 0, reaction_value;
+		vector<double> retorno(5);
+		vector<double> Na_o_diffusion(nConnections * 3);
+		double reactions[DIM_Y][DIM_X][DIM_Z][num_reactions + (nConnections * 3 - 1)]; //0 a 43
+
+		for (int i = 0; i < DIM_X; i++) {
+			for (int j = 0; j < DIM_Y; j++) {
+
+				for (int k = 0; k < DIM_Z; k++) {
+					// << Begin Reactions
+					Na_o_diffusion = Na_o_diffusions(tecido->getId(i, j, k));
+					for (int d = 0; d < Na_o_diffusion.size(); d++) {
+						reaction_value = Na_o_diffusion[d];
+						reactions[j][i][k][d] = reaction_value;
+
+						alfa_0 += reaction_value;
+					}
+					// End Reactions >>
+
+				}
+			}
+		}
+
+
+		// for (int i = 0; i < DIM_X; i++) {
+		// 	for (int j = 0; j < DIM_Y; j++) {
+		// 		for (int k = 0; k < DIM_Z; k++) {
+		// 			cout << tecido->getId(i, j, k) << ": ";
+		// 			for (int r = 0; r < num_reactions; r++) {
+		// 				cout << reactions[i][j][k][r] << " ";
+		// 			}
+		// 			cout << endl;
+		// 		}
+		// 	}
+		// }
+
+
+		// Gerando dois números aleatórios: r1 e r2
+		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+		std::default_random_engine generator (seed);
+		std::uniform_real_distribution<double> distribution (0.0,1.0);
+
+		double r1 = distribution(generator);
+		double r2 = distribution(generator);
+
+		// Calculando o tempo tau
+		double tau = (1 / alfa_0) * log(1 / r1);
+
+		// Definindo a reação que será executada
+		double sum_upper = 0, sum_down = 0;
+		bool flag = false;
+
+		for (int i = 0; i < DIM_X; i++) {
+			for (int j = 0; j < DIM_Y; j++) {
+				for (int k = 0; k < DIM_Z; k++) {
+					for (int r = 0; r < (num_reactions + (nConnections * 3 - 1)); r++) {
+						// cout << "R: " << r <<endl;
+						sum_upper += reactions[j][i][k][r];
+
+						if (sum_upper >= alfa_0 * r2) {
+							//cout << i << " " << j << " " << k << " " << r << endl;
+
+							flag = false;
+							sum_down = 0;
+							for (int x = 0; x < DIM_X && flag == false; x++) {
+								for (int y = 0; y < DIM_Y && flag == false; y++) {
+									for (int z = 0; z < DIM_Z && flag == false; z++) {
+										for (int n = 0; n < (num_reactions +  (nConnections * 3 - 1)) && flag == false; n++) { //0 a 43 -> tem que ir
+											// cout << "N: " << r <<endl;
+
+											if (x == i && y == j && z == k && n == r) {
+												// cout << x << " " << y << " " << z << " " << n << endl;
+												// cout << sum_down << " " << alfa_0 * r2 << " " << sum_upper << endl;
+												flag = true;
+											} else {
+												sum_down += reactions[y][x][z][n];
+											}
+										}
+									}
+								}
+							}
+
+							if (sum_down < alfa_0 * r2) {
+								//cout << sum_upper << " " << alfa_0 * r2 << " " << sum_down << endl;
+								retorno[0] = r + 1; // [1, 26]
+								retorno[1] = i;
+								retorno[2] = j;
+								retorno[3] = k;
+								retorno[4] = tau;
+								// cout << "Reaction: " << r+1 <<endl;
+								// cout << fixed << setprecision(10) << "Tau: " << tau <<endl;
+								return retorno;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	vector<double> calciumExtra() {
+		int nConnections = tecido->numberConnections();
+		int NC = DIM_X * DIM_Y * DIM_Z; // Total number of cells
+		int num_reactions = 1; 
+		double max_reaction = 0, reaction_choice, alfa_0 = 0, reaction_value;
+		vector<double> retorno(5);
+		vector<double> Ca_o_diffusion(nConnections * 3);
+		double reactions[DIM_Y][DIM_X][DIM_Z][num_reactions + (nConnections * 3 - 1)]; //0 a 43
+
+		for (int i = 0; i < DIM_X; i++) {
+			for (int j = 0; j < DIM_Y; j++) {
+
+				for (int k = 0; k < DIM_Z; k++) {
+					// << Begin Reactions
+					Ca_o_diffusion = Ca_o_diffusions(tecido->getId(i, j, k));
+					for (int d = 0; d < Ca_o_diffusion.size(); d++) {
+						reaction_value = Ca_o_diffusion[d];
+						reactions[j][i][k][d] = reaction_value;
+
+						alfa_0 += reaction_value;
+					}
+					// End Reactions >>
+
 				}
 			}
 		}
@@ -815,178 +1017,6 @@ public:
 		}
 	}
 
-	vector<double> run() {
-		int nConnections = tecido->numberConnections();
-		int NC = DIM_X * DIM_Y * DIM_Z; // Total number of cells
-		int num_reactions = 13; // Number of reactions (7 Intracellular + 2 Intercellular +2 extracellular)  	/* Por que uma a mais? */
-		double max_reaction = 0, reaction_choice, alfa_0 = 0, reaction_value;
-		vector<double> retorno(5);
-		vector<double> diffusion(nConnections * 3);
-		vector<double> Na_i_diffusion(nConnections * 3);
-		vector<double> Ca_o_diffusion(nConnections * 3);
-		vector<double> Na_o_diffusion(nConnections * 3);
-		double reactions[DIM_Y][DIM_X][DIM_Z][num_reactions + QTD_DIFFUSIONS*(nConnections * 3 - 1)]; //0 a 43
-
-		for (int i = 0; i < DIM_X; i++) {
-			for (int j = 0; j < DIM_Y; j++) {
-
-				for (int k = 0; k < DIM_Z; k++) {
-					// << Begin Reactions
-					for (int r = 0; r < num_reactions; r++) {
-						if (r == 0) {
-							reaction_value = sigma0(tecido->getId(i, j, k));
-							reactions[j][i][k][r] = reaction_value;
-						} else if (r == 1) {
-							reaction_value = sigma1(tecido->getId(i, j, k));
-							reactions[j][i][k][r] = reaction_value;
-						} else if (r == 2) {
-							reaction_value = sigma2(tecido->getId(i, j, k));
-							reactions[j][i][k][r] = reaction_value;
-						} else if (r == 3) {
-							reaction_value = kf_Ea(tecido->getId(i, j, k));
-							reactions[j][i][k][r] = reaction_value;
-						} else if (r == 4) {
-							reaction_value = kf_Ca(tecido->getId(i, j, k));
-							reactions[j][i][k][r] = reaction_value;
-						} else if (r == 5) {
-							reaction_value = ko_Ca(tecido->getId(i, j, k));
-							reactions[j][i][k][r] = reaction_value;
-						} else if (r == 6) {
-							reaction_value = sigma3(tecido->getId(i, j, k));
-							reactions[j][i][k][r] = reaction_value;
-						} else if (r == 7) {
-							reaction_value = kd_Ia(tecido->getId(i, j, k));
-							reactions[j][i][k][r] = reaction_value;
-						} else if (r == 8) {
-							diffusion = diffusions(tecido->getId(i, j, k));
-							for (int d = 0; d < diffusion.size(); d++) {
-								reaction_value = diffusion[d];
-								reactions[j][i][k][r + d] = reaction_value; // 8 a 25
-
-								alfa_0 += reaction_value;
-							}
-						} else if (r == 9) {
-							Na_i_diffusion = Na_i_diffusions(tecido->getId(i, j, k));
-							for (int d = diffusion.size()-1; d < diffusion.size()-1+Na_i_diffusion.size(); d++) {
-								reaction_value = Na_i_diffusion[d-(diffusion.size()-1)];
-								reactions[j][i][k][r + d] = reaction_value; // 26 a 43
-
-								alfa_0 += reaction_value;
-							}
-						}  else if (r == 10) {
-							Ca_o_diffusion = Ca_o_diffusions(tecido->getId(i, j, k));
-							for (int d = diffusion.size()-1+Na_i_diffusion.size()-1;
-							 d < diffusion.size()-1+Na_i_diffusion.size()-1+ Ca_o_diffusion.size(); d++) {
-								reaction_value = Ca_o_diffusion[d-(diffusion.size()-1+Na_i_diffusion.size()-1)];
-								reactions[j][i][k][r + d] = reaction_value; // 44 a 61
-
-								alfa_0 += reaction_value;
-							}
-						}  else if (r == 11) {
-							Na_o_diffusion = Na_o_diffusions(tecido->getId(i, j, k));
-							for (int d = diffusion.size()-1+Na_i_diffusion.size()-1+Ca_o_diffusion.size()-1;
-							 d < diffusion.size()-1+Na_i_diffusion.size()-1+ Ca_o_diffusion.size()-1+Na_o_diffusion.size(); d++) {
-								reaction_value = Na_o_diffusion[d-(diffusion.size()-1+Na_i_diffusion.size()-1+Ca_o_diffusion.size()-1)];
-								reactions[j][i][k][r + d] = reaction_value; //62 até 79
-
-								alfa_0 += reaction_value;
-							}
-						}
-						else if (r == 12){ //NCX
-							reactions[j][i][k][r] = reaction_value;
-						}
-
-						if(r < 8){
-
-							alfa_0 += reaction_value;
-						}
-					}
-					// End Reactions >>
-					
-					//DEBUG
-					// for (int r = 0; r < num_reactions + QTD_DIFFUSIONS*(nConnections * 3 - 1); r++) 
-					// 	cout << reactions[j][i][k][r]<<" ";
-					// cout << endl; 
-				}
-			}
-		}
-
-
-		// for (int i = 0; i < DIM_X; i++) {
-		// 	for (int j = 0; j < DIM_Y; j++) {
-		// 		for (int k = 0; k < DIM_Z; k++) {
-		// 			cout << tecido->getId(i, j, k) << ": ";
-		// 			for (int r = 0; r < num_reactions; r++) {
-		// 				cout << reactions[i][j][k][r] << " ";
-		// 			}
-		// 			cout << endl;
-		// 		}
-		// 	}
-		// }
-
-
-		// Gerando dois números aleatórios: r1 e r2
-		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-		std::default_random_engine generator (seed);
-		std::uniform_real_distribution<double> distribution (0.0,1.0);
-
-		double r1 = distribution(generator);
-		double r2 = distribution(generator);
-
-		// Calculando o tempo tau
-		double tau = (1 / alfa_0) * log(1 / r1);
-
-		// Definindo a reação que será executada
-		double sum_upper = 0, sum_down = 0;
-		bool flag = false;
-
-		for (int i = 0; i < DIM_X; i++) {
-			for (int j = 0; j < DIM_Y; j++) {
-				for (int k = 0; k < DIM_Z; k++) {
-					for (int r = 0; r < (num_reactions + QTD_DIFFUSIONS*(nConnections * 3 - 1)); r++) {
-						// cout << "R: " << r <<endl;
-						sum_upper += reactions[j][i][k][r];
-
-						if (sum_upper >= alfa_0 * r2) {
-							//cout << i << " " << j << " " << k << " " << r << endl;
-
-							flag = false;
-							sum_down = 0;
-							for (int x = 0; x < DIM_X && flag == false; x++) {
-								for (int y = 0; y < DIM_Y && flag == false; y++) {
-									for (int z = 0; z < DIM_Z && flag == false; z++) {
-										for (int n = 0; n < (num_reactions +  QTD_DIFFUSIONS*(nConnections * 3 - 1)) && flag == false; n++) { //0 a 43 -> tem que ir
-											// cout << "N: " << r <<endl;
-
-											if (x == i && y == j && z == k && n == r) {
-												// cout << x << " " << y << " " << z << " " << n << endl;
-												// cout << sum_down << " " << alfa_0 * r2 << " " << sum_upper << endl;
-												flag = true;
-											} else {
-												sum_down += reactions[y][x][z][n];
-											}
-										}
-									}
-								}
-							}
-
-							if (sum_down < alfa_0 * r2) {
-								//cout << sum_upper << " " << alfa_0 * r2 << " " << sum_down << endl;
-								retorno[0] = r + 1; // [1, 26]
-								retorno[1] = i;
-								retorno[2] = j;
-								retorno[3] = k;
-								retorno[4] = tau;
-								// cout << "Reaction: " << r+1 <<endl;
-								// cout << fixed << setprecision(10) << "Tau: " << tau <<endl;
-								return retorno;
-							}
-						}
-					}
-				}
-			}
-		}
-	}
 };
 
 void simulation(int destination, double frequency, string topologie) {
@@ -1013,8 +1043,8 @@ void simulation(int destination, double frequency, string topologie) {
 	// SETTING THE VALUES
 	tecido.set(tx_x, tx_y, tx_z, "C", 0.5*SCALE);
 	tecido.set(tx_x, tx_y, tx_z, "Na_i", 10000*SCALE);
-	// tecido.set(tx_x, tx_y, tx_z, "C_o", 150*SCALE);
-	// tecido.set(tx_x, tx_y, tx_z, "Na_o", 10000*SCALE);
+	tecido.set(tx_x, tx_y, tx_z, "C_o", 20*SCALE);
+	tecido.set(tx_x, tx_y, tx_z, "Na_o", 1000*SCALE);
 
 	// Print tissue
 	tecido.printTissue();
@@ -1105,12 +1135,12 @@ void simulation(int destination, double frequency, string topologie) {
 
 
 		// DEBUG (To see reaction by reaction)
-		/* cout << endl;
-		cout << "Reaction: " << reaction << endl;
-		cout << "Cell: " << tecido.getId(choice[1], choice[2], choice[3]) << endl;
-		tecido.printTissue();
-		cout << endl;
-		getchar(); */
+		// cout << endl;
+		// cout << "Reaction: " << reaction << endl;
+		// cout << "Cell: " << tecido.getId(choice[1], choice[2], choice[3]) << endl;
+		// tecido.printTissue();
+		// cout << endl;
+		// getchar();
 
 		//cout << current_time << endl;
 
@@ -1178,19 +1208,18 @@ void simulation(int destination, double frequency, string topologie) {
 			}
 		}
 
-
 		// INTERCELLULAR SODIUM REACTIONS
 		choice = gillespie.sodiumInter();
 		tau_sodium_inter = choice[4];
+		reaction = choice[0];
 
 		//qtd_reactions[reaction - 1]++;
 		
 		for (int conn = 0; conn < nConnections; conn++) {
-			if (reaction >= (conn * 3) && reaction <= 2 + (conn * 3)) {
+			if (reaction >= 1 + (conn * 3) && reaction <= 3 + (conn * 3)) {
 				connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
 				if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "Na_i") > tecido.get(connections[conn], "Na_i")) {
-					cout << "Na_i reaction!\n";
 					tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", -ALPHA);
 					tecido.accumulate(connections[conn], "Na_i", ALPHA);
 				} else {
@@ -1200,11 +1229,57 @@ void simulation(int destination, double frequency, string topologie) {
 			}
 		}
 
+		// EXTRACELLULAR SODIUM REACTIONS
+		choice = gillespie.sodiumExtra();
+		tau_sodium_extra = choice[4];
+		reaction = choice[0];
+
+		//qtd_reactions[reaction - 1]++;
 		
-		cout << "Tau: " << max(tau_calcium, max(tau_sodium_inter, max(tau_sodium_extra, tau_calcium_extra))) << endl;
-		cout << "Tau: " << fixed << setprecision(10) << tau_calcium << " " << tau_sodium_inter << " " << tau_sodium_extra << " " << tau_calcium_extra << endl;
+		for (int conn = 0; conn < nConnections; conn++) {
+			if (reaction >= 1 + (conn * 3) && reaction <= 3 + (conn * 3)) {
+				connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+
+				if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "Na_o") > tecido.get(connections[conn], "Na_o")) {
+					tecido.accumulate(choice[1], choice[2], choice[3], "Na_o", -ALPHA);
+					tecido.accumulate(connections[conn], "Na_o", ALPHA);
+				} else {
+					cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[conn] << endl;
+					diffusion_error = true;
+				}
+			}
+		}
+
+		// EXTRACELLULAR CALCIUM REACTIONS
+		choice = gillespie.calciumExtra();
+		tau_calcium_extra = choice[4];
+		reaction = choice[0];
+
+		//qtd_reactions[reaction - 1]++;
+		
+		for (int conn = 0; conn < nConnections; conn++) {
+			if (reaction >= 1 + (conn * 3) && reaction <= 3 + (conn * 3)) {
+				connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+
+				if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "C_o") > tecido.get(connections[conn], "C_o")) {
+					tecido.accumulate(choice[1], choice[2], choice[3], "C_o", -ALPHA);
+					tecido.accumulate(connections[conn], "C_o", ALPHA);
+				} else {
+					cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[conn] << endl;
+					diffusion_error = true;
+				}
+			}
+		}
+
+		
+		// cout << "Tau: " << max(tau_calcium, max(tau_sodium_inter, max(tau_sodium_extra, tau_calcium_extra))) << endl;
+		// cout << "Tau: " << fixed << setprecision(10) << tau_calcium << " " << tau_sodium_inter << " " << tau_sodium_extra << " " << tau_calcium_extra << endl;
 		current_time += (max(tau_calcium, max(tau_sodium_inter, max(tau_sodium_extra, tau_calcium_extra))) * 1000);
 
+	
+
+
+		/* ==================================================== */
 		// /* DIFFUSION REACTIONS */
 		// // Citosolic Calcium Diffusion
 		//  else if(reaction >= 9 && reaction < 9 + nConnections * 3){
@@ -1313,7 +1388,7 @@ int main(){
 
 	int destination = 1;
 	double frequency = 0.00000001;
-	string topologie = "LR3";
+	string topologie = "RD";
 	
 	//for (int dest = 1; dest <= 1; dest++) {
 	//	simulation(dest, frequency, topologie);
