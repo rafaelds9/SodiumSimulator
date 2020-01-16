@@ -550,7 +550,47 @@ public:
 	}
 
 	//Reaction 13 - NCX
+	vector<double> Na_Ca_exchanger(int id) {
+		int nConnections = tecido->numberConnections();
+		vector<double> diffusions(nConnections * 3);
 
+		vector<int> connections(nConnections);
+		connections = tecido->getConnections(id);
+		double value;
+
+		for (int i = 0; i < connections.size(); i++){
+			for (int gj = 0; gj < 3; gj++) {
+				if (connections[i] != -1)
+					value = NCX_diffusionEquation(id, connections[i], gj);
+				else
+					value = 0;
+
+				diffusions[(3 * i) + gj] = value;
+			}
+		}
+
+		return diffusions;
+	}
+	double NCX_diffusionEquation(int id1, int gap_junction, int threshold_Voltage) {
+		double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
+		double diff_Na, diff_Ca;
+
+		if (tecido->get(id1, "Na_o") <= tecido->get(id1, "Na_o"))
+			return 0;
+		if (threshold_Voltage >= -0.08 && threshold_Voltage <= -0.07) { // Artigo
+			if (gap_junction == 0) {
+				diff_Na = (tecido->get(id1, "NaD") / vol_cell) * (tecido->get(id1, "Na_i") - tecido->get(id1, "Na_o")) * tecido->get(id1, "phh");
+				diff_Ca = (tecido->get(id1, "D") / vol_cell) * (tecido->get(id1, "C_o") - tecido->get(id1, "C")) * tecido->get(id1, "phh");
+			} else if (gap_junction == 1) {
+				diff_Na = (tecido->get(id1, "NaD") / vol_cell) * (tecido->get(id1, "Na_i") - tecido->get(id1, "Na_o")) * tecido->get(id1, "phl");
+				diff_Ca = (tecido->get(id1, "D") / vol_cell) * (tecido->get(id1, "C_o") - tecido->get(id1, "C")) * tecido->get(id1, "phl");
+			} else {
+				diff_Na = (tecido->get(id1, "NaD") / vol_cell) * (tecido->get(id1, "Na_i") - tecido->get(id1, "Na_o")) * tecido->get(id1, "plh");
+				diff_Ca = (tecido->get(id1, "D") / vol_cell) * (tecido->get(id1, "C_o") - tecido->get(id1, "C")) * tecido->get(id1, "plh");
+			}
+		}
+		return diff_Na, diff_Ca;
+	}
 
 	vector<double> calciumReactions() {
 		int nConnections = tecido->numberConnections();
