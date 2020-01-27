@@ -2,7 +2,6 @@
 
 using namespace std;
 
-
 #define SCALE 1
 #define INV_SCALE 1/SCALE
 #define QTD_DIFFUSIONS 4
@@ -11,6 +10,10 @@ using namespace std;
 #define DIM_Z 3
 #define ALPHA 0.01
 #define PI 3.14159265359
+#define R 8.314472 // [N.m/(g.mol.K)] (Gas constant) Zaki Ahmad, in Principles of Corrosion Engineering and Corrosion Control, 2006
+#define T 273.16+25 // [K] Ambient temperature
+#define n_NA 1 // Sodium charge
+#define F 96485.3329 // [s.A/mol] Faraday's constant
 
 double conc, tx_conc, diameter_cell = 5, deltaamp;
 
@@ -74,11 +77,17 @@ public:
 		parameters["plh"] = plh[0];
 		parameters["phh"] = phh[0];
 
-		double Na_i = SCALE*15000;  parameters["Na_i"] = Na_i; //Langer3, Chatton 2016 - Colocar uma relação
-		double Na_o = SCALE*150000/(DIM_X * DIM_Y * DIM_Z);  parameters["Na_o"] = Na_o; //chatton 2016
+		double Na_i = SCALE*15000;  parameters["Na_i"] = Na_i; //Langer3, Chatton 2016 [uM] - Colocar uma relação
+		double Na_o = SCALE*150000/(DIM_X * DIM_Y * DIM_Z);  parameters["Na_o"] = Na_o; //chatton 2016 [uM]
 		double NaD = (4/3)*PI*diameter_cell*600; parameters["NaD"] = NaD; 
-		double C_o = SCALE*2300/(DIM_X * DIM_Y * DIM_Z); parameters["C_o"] = C_o; //Kirischuk 1997
-		double Vm = -80; parameters["Vm"] = Vm; //Verify this value later - Kirischuk 2012
+		double C_o = SCALE*2300/(DIM_X * DIM_Y * DIM_Z); parameters["C_o"] = C_o; //Kirischuk 1997 [uM]
+		//double K_i = 0; parameters["K_i"] = K_i; // A definir
+		//double K_o = 0; parameters["K_o"] = K_o; // A definir
+		double Vm = -SCALE*40; parameters["Vm"] = Vm; //Verify this value later - Koenigsberger, 2004-->-40/Kirischuk 2012-->-80 [mV]
+		double Erev = SCALE*(R*T/n_NA*F)*log(Na_o/Na_i)*1000; parameters["Erev"] = Erev; // [mV] VERIFICAR!!!! Nernst Eq./Eq (3) from  Koenigsberger, 2004
+		double DDC_Na = -SCALE*115000; parameters["DDC_Na"] = DDC_Na; // Kirischuk 2012 [uM]
+		double G_NCX = SCALE*0.00316; parameters["G_NCX"] = G_NCX; // Koenigsberger, 2004 [uM.m.V^(-1).S^(-1)]
+		double C_NCX = SCALE*0.5; parameters["C_NCX"] = C_NCX; // Barros, 2015 [uM]
 
 	}
 
@@ -140,6 +149,10 @@ public:
 
 	void accumulate(int x, int y, int z, string parameter, double add) {
 		tecido[y][x][z].parameters[parameter] += add;
+	}
+	
+	void update_parameters(int x, int y, int z) {
+		tecido[y][x][z].parameters["Erev"] = (R*T/n_NA*F)*log(tecido[y][x][z].parameters["Na_o"]/tecido[y][x][z].parameters["Na_i"])*1000; // ALTERAR!!!
 	}
 
 	void accumulate(int id, string parameter, double add) {
@@ -407,8 +420,7 @@ public:
 		}
 
 		return diffusions;
-	}
-
+	};
 	double diffusionEquation(int id1, int id2, int gap_junction) {
 		double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
 		double diff;
@@ -448,8 +460,7 @@ public:
 		}
 
 		return diffusions;
-	}
-
+	};
 	double Na_i_diffusionEquation(int id1, int id2, int gap_junction) {
 		double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
 		double diff;
@@ -467,6 +478,7 @@ public:
 
 		return diff;
 	}
+
 	// Reaction 11
 	vector<double> Ca_o_diffusions(int id) {
 		int nConnections = tecido->numberConnections();
@@ -488,8 +500,7 @@ public:
 		}
 
 		return diffusions;
-	}
-
+	};
 	double Ca_o_diffusionEquation(int id1, int id2, int gap_junction) {
 		double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
 		double diff;
@@ -529,8 +540,7 @@ public:
 		}
 
 		return diffusions;
-	}
-
+	};
 	double Na_o_diffusionEquation(int id1, int id2, int gap_junction) {
 		double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
 		double diff;
@@ -551,46 +561,29 @@ public:
 
 	//Reaction 13 - NCX
 	vector<double> Na_Ca_exchanger(int id) {
-		int nConnections = tecido->numberConnections();
-		vector<double> diffusions(nConnections * 3);
+		double J_NCX;
 
-		vector<int> connections(nConnections);
-		connections = tecido->getConnections(id);
-		double value;
-
-		for (int i = 0; i < connections.size(); i++){
-			for (int gj = 0; gj < 3; gj++) {
-				if (connections[i] != -1)
-					value = NCX_diffusionEquation(id, connections[i], gj);
-				else
-					value = 0;
-
-				diffusions[(3 * i) + gj] = value;
-			}
+		// Modo reverso: Potencial de reversão >= Potencial de repouso; DDC de Na (intra-extra) >= Concentracao de Ref
+		if ((tecido->get(id1, "Erev") >= tecido->get(id1, "Vm")) && (tecido->get(id1, "Na_i") - tecido->get(id1, "Na_o"))>=tecido->get(id1, "DDC_Na")) { // Kirischuk 2012
+			// Eq. (6) from Koenigsberger, 2004
+			J_NCX = tecido->get(id1, "G_NCX")*tecido->get(id1, "C")*(tecido->get(id1, "Erev") - tecido->get(id1, "Vm"))/(tecido->get(id1, "C") + tecido->get(id1, "C_NCX"));
 		}
-
-		return diffusions;
-	}
-	double NCX_diffusionEquation(int id1, int gap_junction, int threshold_Voltage) {
-		double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
-		double diff_Na, diff_Ca;
-
-		if (tecido->get(id1, "Na_o") <= tecido->get(id1, "Na_o"))
+		// Modo direto: Potencial de reversão < Potencial de repouso; DDC de Na (intra-extra) < Concentracao de Ref
+		else if ((tecido->get(id1, "Erev") < tecido->get(id1, "Vm")) && (tecido->get(id1, "Na_i") - tecido->get(id1, "Na_o"))<tecido->get(id1, "DDC_Na")) { // Kirischuk 2012
+			// Eq. (6) from Koenigsberger, 2004
+			J_NCX = tecido->get(id1, "G_NCX")*tecido->get(id1, "C")*(tecido->get(id1, "Erev") - tecido->get(id1, "Vm"))/(tecido->get(id1, "C") + tecido->get(id1, "C_NCX"));
+		}
+		else{
 			return 0;
-		if (threshold_Voltage >= -0.08 && threshold_Voltage <= -0.07) { // Artigo
-			if (gap_junction == 0) {
-				diff_Na = (tecido->get(id1, "NaD") / vol_cell) * (tecido->get(id1, "Na_i") - tecido->get(id1, "Na_o")) * tecido->get(id1, "phh");
-				diff_Ca = (tecido->get(id1, "D") / vol_cell) * (tecido->get(id1, "C_o") - tecido->get(id1, "C")) * tecido->get(id1, "phh");
-			} else if (gap_junction == 1) {
-				diff_Na = (tecido->get(id1, "NaD") / vol_cell) * (tecido->get(id1, "Na_i") - tecido->get(id1, "Na_o")) * tecido->get(id1, "phl");
-				diff_Ca = (tecido->get(id1, "D") / vol_cell) * (tecido->get(id1, "C_o") - tecido->get(id1, "C")) * tecido->get(id1, "phl");
-			} else {
-				diff_Na = (tecido->get(id1, "NaD") / vol_cell) * (tecido->get(id1, "Na_i") - tecido->get(id1, "Na_o")) * tecido->get(id1, "plh");
-				diff_Ca = (tecido->get(id1, "D") / vol_cell) * (tecido->get(id1, "C_o") - tecido->get(id1, "C")) * tecido->get(id1, "plh");
-			}
 		}
-		return diff_Na, diff_Ca;
+
+		return J_NCX;
+
 	}
+
+	//Reaction 14 - Na+/K+ Pump
+
+	// REACTIONS - FIM
 
 	vector<double> calciumReactions() {
 		int nConnections = tecido->numberConnections();
@@ -640,7 +633,6 @@ public:
 								/*if (reaction_value >= max_reaction) {
 									max_reaction = reaction_value;
 									cell[0] = j; cell[1] = i; cell[2] = k;
-
 									if (d >= 0 && d <= 2)
 										reaction_choice = 8;
 									else if (d >= 3 && d <= 5)
@@ -850,6 +842,7 @@ public:
 			}
 		}
 	}
+
 	vector<double> sodiumExtra() {
 		int nConnections = tecido->numberConnections();
 		int NC = DIM_X * DIM_Y * DIM_Z; // Total number of cells
@@ -953,6 +946,7 @@ public:
 			}
 		}
 	}
+
 	vector<double> calciumExtra() {
 		int nConnections = tecido->numberConnections();
 		int NC = DIM_X * DIM_Y * DIM_Z; // Total number of cells
@@ -964,9 +958,9 @@ public:
 
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
-
 				for (int k = 0; k < DIM_Z; k++) {
 					// << Begin Reactions
+
 					Ca_o_diffusion = Ca_o_diffusions(tecido->getId(i, j, k));
 					for (int d = 0; d < Ca_o_diffusion.size(); d++) {
 						reaction_value = Ca_o_diffusion[d];
@@ -1057,6 +1051,88 @@ public:
 		}
 	}
 
+	vector<double> NCX_reaction() {
+		int NC = DIM_X * DIM_Y * DIM_Z; // Total number of cells
+		double max_reaction = 0, reaction_choice, alfa_0 = 0, reaction_value;
+		vector<double> retorno(5);
+		double reactions[DIM_Y][DIM_X][DIM_Z];
+
+		for (int i = 0; i < DIM_X; i++) {
+			for (int j = 0; j < DIM_Y; j++) {
+				for (int k = 0; k < DIM_Z; k++) {
+					tecido->update_parameters(i, j , k);
+					
+					reaction_value = Na_Ca_exchanger(tecido->getId(i, j, k));
+					reactions[j][i][k] = reaction_value;
+
+					alfa_0 += reaction_value;
+				}
+			}
+		}
+
+		// for (int i = 0; i < DIM_X; i++) {
+		// 	for (int j = 0; j < DIM_Y; j++) {
+		// 		for (int k = 0; k < DIM_Z; k++) {
+		// 			cout << tecido->getId(i, j, k) << ": ";
+		// 				cout << reactions[i][j][k][r] << " ";
+		// 			cout << endl;
+		// 		}
+		// 	}
+		// }
+
+		// Gerando dois números aleatórios: r1 e r2
+		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+		std::default_random_engine generator (seed);
+		std::uniform_real_distribution<double> distribution (0.0,1.0);
+
+		double r1 = distribution(generator);
+		double r2 = distribution(generator);
+
+		// Calculando o tempo tau
+		double tau = (1 / alfa_0) * log(1 / r1);
+
+		// Definindo a reação que será executada
+		double sum_upper = 0, sum_down = 0;
+		bool flag = false;
+
+		for (int i = 0; i < DIM_X; i++) {
+			for (int j = 0; j < DIM_Y; j++) {
+				for (int k = 0; k < DIM_Z; k++) {
+					sum_upper += reactions[j][i][k];
+
+					if (sum_upper >= alfa_0 * r2) {
+						//cout << i << " " << j << " " << k << " " << r << endl;
+
+						flag = false;
+						sum_down = 0;
+						for (int x = 0; x < DIM_X && flag == false; x++) {
+							for (int y = 0; y < DIM_Y && flag == false; y++) {
+								for (int z = 0; z < DIM_Z && flag == false; z++) {
+									if (x == i && y == j && z == k) {
+										//cout << x << " " << y << " " << z << " " << n << endl;
+										//cout << sum_down << " " << alfa_0 * r2 << " " << sum_upper << endl;
+										flag = true;
+									} else {
+										sum_down += reactions[y][x][z];
+									}
+								}
+							}
+						}
+						if (sum_down < alfa_0 * r2) {
+							//cout << sum_upper << " " << alfa_0 * r2 << " " << sum_down << endl;
+							retorno[0] = 1;
+							retorno[1] = i;
+							retorno[2] = j;
+							retorno[3] = k;
+							retorno[4] = tau;
+
+							return retorno;
+						}
+					}
+				}
+			}
+		}
+	}
 };
 
 void simulation(int destination, double frequency, string topologie) {
@@ -1447,7 +1523,7 @@ void simulation(int destination, double frequency, string topologie) {
 	file_gain.close();
 
 	/* ### END GAIN ### */
-}
+};
 
 /* MAIN */
 int main(){
@@ -1463,4 +1539,4 @@ int main(){
 	simulation(destination, frequency, topologie);
 
 	return 0;
-}
+};
