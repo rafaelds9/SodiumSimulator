@@ -11,7 +11,7 @@ using namespace std;
 #define ALPHA 0.01
 #define PI 3.14159265359
 #define R 8.314472 // [N.m/(g.mol.K)] (Gas constant) Zaki Ahmad, in Principles of Corrosion Engineering and Corrosion Control, 2006
-#define T 273.16+25 // [K] Ambient temperature
+#define T 298.16 // [K] Ambient temperature
 #define n_NA 1 // Sodium charge
 #define F 96485.3329 // [s.A/mol] Faraday's constant
 
@@ -53,7 +53,7 @@ public:
 		double C = 0.1*SCALE; parameters["C"] = C;
 		double n = 2.02*SCALE; parameters["n"] = n;
 		double K2 = 0.1*SCALE; parameters["K2"] = K2;
-		double VM3 = 40*SCALE; parameters["VM3"] = VM3; // Porque nao 40, como diz no artigo?
+		double VM3 = 40*SCALE; parameters["VM3"] = VM3; // Por que nao 40, como diz no artigo?
 		double ko = 0.5*SCALE; parameters["ko"] = ko;
 		double ER = 1.5*SCALE; parameters["ER"] = ER;
 		double kf = 0.5*SCALE; parameters["kf"] = kf;
@@ -83,11 +83,20 @@ public:
 		double C_o = SCALE*2300/(DIM_X * DIM_Y * DIM_Z); parameters["C_o"] = C_o; //Kirischuk 1997 [uM]
 		//double K_i = 0; parameters["K_i"] = K_i; // A definir
 		//double K_o = 0; parameters["K_o"] = K_o; // A definir
-		double Vm = -SCALE*40; parameters["Vm"] = Vm; //Verify this value later - Koenigsberger, 2004-->-40/Kirischuk 2012-->-80 [mV]
-		double Erev = SCALE*(R*T/n_NA*F)*log(Na_o/Na_i)*1000; parameters["Erev"] = Erev; // [mV] VERIFICAR!!!! Nernst Eq./Eq (3) from  Koenigsberger, 2004
+		double V_NCX = -SCALE*80; parameters["V_NCX"] = V_NCX; //Verify this value later - Koenigsberger, 2004-->-40/Kirischuk 2012-->-80 [mV]
+		double Vm = SCALE*(R*T/n_NA*F)*log(Na_o/Na_i)*1000; parameters["Vm"] = Vm; // [mV] VERIFICAR!!!! Nernst Eq./Eq (3) from  Koenigsberger, 2004
 		double DDC_Na = -SCALE*115000; parameters["DDC_Na"] = DDC_Na; // Kirischuk 2012 [uM]
 		double G_NCX = SCALE*0.00316; parameters["G_NCX"] = G_NCX; // Koenigsberger, 2004 [uM.m.V^(-1).S^(-1)]
 		double C_NCX = SCALE*0.5; parameters["C_NCX"] = C_NCX; // Barros, 2015 [uM]
+		double K_mCaAct = SCALE*0.394; parameters["K_mCaAct"] = K_mCaAct; // Weber, 2001 & Brazhe 2018 [uM]
+		double n_Hill = SCALE*2; parameters["n_Hill"] = n_Hill; // Weber, 2001 & Brazhe 2018
+		double J_max = SCALE*25; parameters["J_max"] = J_max; // Brazhe 2018 [A/F] 25-60
+		double eta = SCALE*0.35; parameters["eta"] = eta; // Weber, 2001 & Brazhe 2018
+		double k_sat = SCALE*0.27; parameters["k_sat"] = k_sat; // Weber, 2001 & Brazhe 2018
+		double K_mNao = SCALE*87500; parameters["K_mNao"] = K_mNao; // Weber, 2001 & Brazhe 2018 [uM]
+		double K_mNai = SCALE*12300; parameters["K_mNai"] = K_mNai; // Weber, 2001 & Brazhe 2018 [uM]
+		double K_mCao = SCALE*1300; parameters["K_mCao"] = K_mCao; // Weber, 2001 & Brazhe 2018 [uM]
+		double K_mCai = SCALE*3.6; parameters["K_mCai"] = K_mCai; // Weber, 2001 & Brazhe 2018 [uM]
 
 	}
 
@@ -152,7 +161,7 @@ public:
 	}
 	
 	void update_parameters(int x, int y, int z) {
-		tecido[y][x][z].parameters["Erev"] = (R*T/n_NA*F)*log(tecido[y][x][z].parameters["Na_o"]/tecido[y][x][z].parameters["Na_i"])*1000; // ALTERAR!!!
+		tecido[y][x][z].parameters["Vm"] = (R*T/n_NA*F)*log(tecido[y][x][z].parameters["Na_o"]/tecido[y][x][z].parameters["Na_i"])*1000; // ALTERAR!!!
 	}
 
 	void accumulate(int id, string parameter, double add) {
@@ -560,18 +569,39 @@ public:
 	}
 
 	//Reaction 13 - NCX
-	vector<double> Na_Ca_exchanger(int id) {
-		double J_NCX;
+	double Na_Ca_exchanger(int id, int *NCX_mode) {
+		double J_NCX, Allo, Delta_E_num, Delta_E_denom;
+		//cout << "Entrei no NCX " << endl;
+		//(tecido->get(id, "Erev") >= tecido->get(id, "Vm")) &&
+		// Modo reverso: Potencial de reversão >= Potencial de repouso; DDC de Na (intra-extra) >= Concentracao de Ref  
+		if (tecido->get(id, "Na_i") >= 16600 && tecido->get(id, "C") <= 4) { // Kirischuk 2012 [uM]
+			// Eq. (6) from Koenigsberger, 2004
+			*NCX_mode = 1;
+			//J_NCX = tecido->get(id, "G_NCX")*tecido->get(id, "C")*(tecido->get(id, "Vm") - tecido->get(id, "V_NCX"))/(tecido->get(id, "C") + tecido->get(id, "C_NCX"));
 
-		// Modo reverso: Potencial de reversão >= Potencial de repouso; DDC de Na (intra-extra) >= Concentracao de Ref
-		if ((tecido->get(id1, "Erev") >= tecido->get(id1, "Vm")) && (tecido->get(id1, "Na_i") - tecido->get(id1, "Na_o"))>=tecido->get(id1, "DDC_Na")) { // Kirischuk 2012
-			// Eq. (6) from Koenigsberger, 2004
-			J_NCX = tecido->get(id1, "G_NCX")*tecido->get(id1, "C")*(tecido->get(id1, "Erev") - tecido->get(id1, "Vm"))/(tecido->get(id1, "C") + tecido->get(id1, "C_NCX"));
+			Allo = 1/(1 + pow(tecido->get(id, "K_mCaAct")/tecido->get(id, "C"), tecido->get(id, "n_Hill")));
+			Delta_E_num = tecido->get(id, "J_max")*( pow(tecido->get(id, "Na_i"),3)*tecido->get(id, "C_o")*exp(tecido->get(id, "eta")*(tecido->get(id, "V_NCX")/1000)*F/(R*T)) - pow(tecido->get(id, "Na_o"),3)*tecido->get(id, "C")*exp((tecido->get(id, "eta")-1)*(tecido->get(id, "V_NCX")/1000)*F/(R*T)));
+			Delta_E_denom = ( tecido->get(id, "K_mCao")*pow(tecido->get(id, "Na_i"),3) + pow(tecido->get(id, "K_mNao"),3)*tecido->get(id, "C") + pow(tecido->get(id, "K_mNai"),3)*tecido->get(id, "C_o")*(1+tecido->get(id, "C")/tecido->get(id, "K_mCai")) + tecido->get(id, "K_mCai")*pow(tecido->get(id, "Na_o"),3)*(1+pow(tecido->get(id, "Na_i")/tecido->get(id, "K_mCai"),3)) + pow(tecido->get(id, "Na_i"),3)*tecido->get(id, "C_o") + pow(tecido->get(id, "Na_o"),3)*tecido->get(id, "C") )*(1 + tecido->get(id, "k_sat")*exp((tecido->get(id, "eta")-1)*(tecido->get(id, "V_NCX")/1000)*F/(R*T)));
+			
+			J_NCX = Allo*Delta_E_num/Delta_E_denom;
+			
+			cout << setprecision(16) << "Reverse Mode -- J_NCX = " << J_NCX << endl;
+			//cout << "Reverse Mode -- C = " << tecido->get(id, "C") << endl;
 		}
+		//(tecido->get(id, "Erev") < tecido->get(id, "Vm")) && 
 		// Modo direto: Potencial de reversão < Potencial de repouso; DDC de Na (intra-extra) < Concentracao de Ref
-		else if ((tecido->get(id1, "Erev") < tecido->get(id1, "Vm")) && (tecido->get(id1, "Na_i") - tecido->get(id1, "Na_o"))<tecido->get(id1, "DDC_Na")) { // Kirischuk 2012
+		else if (tecido->get(id, "Na_i") < 16600 && tecido->get(id, "C") > 4) { // Kirischuk 2012 [uM]
 			// Eq. (6) from Koenigsberger, 2004
-			J_NCX = tecido->get(id1, "G_NCX")*tecido->get(id1, "C")*(tecido->get(id1, "Erev") - tecido->get(id1, "Vm"))/(tecido->get(id1, "C") + tecido->get(id1, "C_NCX"));
+			*NCX_mode = 2;
+			//J_NCX = tecido->get(id, "G_NCX")*tecido->get(id, "C")*(tecido->get(id, "Vm") - tecido->get(id, "V_NCX"))/(tecido->get(id, "C") + tecido->get(id, "C_NCX"));
+			
+			Allo = 1/(1 + pow(tecido->get(id, "K_mCaAct")/tecido->get(id, "C"), tecido->get(id, "n_Hill")));
+			Delta_E_num = tecido->get(id, "J_max")*( pow(tecido->get(id, "Na_i"),3)*tecido->get(id, "C_o")*exp(tecido->get(id, "eta")*(tecido->get(id, "V_NCX")/1000)*F/(R*T)) - pow(tecido->get(id, "Na_o"),3)*tecido->get(id, "C")*exp((tecido->get(id, "eta")-1)*(tecido->get(id, "V_NCX")/1000)*F/(R*T)));
+			Delta_E_denom = ( tecido->get(id, "K_mCao")*pow(tecido->get(id, "Na_i"),3) + pow(tecido->get(id, "K_mNao"),3)*tecido->get(id, "C") + pow(tecido->get(id, "K_mNai"),3)*tecido->get(id, "C_o")*(1+tecido->get(id, "C")/tecido->get(id, "K_mCai")) + tecido->get(id, "K_mCai")*pow(tecido->get(id, "Na_o"),3)*(1+pow(tecido->get(id, "Na_i")/tecido->get(id, "K_mCai"),3)) + pow(tecido->get(id, "Na_i"),3)*tecido->get(id, "C_o") + pow(tecido->get(id, "Na_o"),3)*tecido->get(id, "C") )*(1 + tecido->get(id, "k_sat")*exp((tecido->get(id, "eta")-1)*(tecido->get(id, "V_NCX")/1000)*F/(R*T)));
+			
+			J_NCX = Allo*Delta_E_num/Delta_E_denom;
+			
+			//cout << setprecision(16) << "Forward Mode -- J_NCX = " << Delta_E_denom << endl;
 		}
 		else{
 			return 0;
@@ -1052,18 +1082,19 @@ public:
 	}
 
 	vector<double> NCX_reaction() {
-		int NC = DIM_X * DIM_Y * DIM_Z; // Total number of cells
+		int NCX_mode; // Total number of cells
 		double max_reaction = 0, reaction_choice, alfa_0 = 0, reaction_value;
 		vector<double> retorno(5);
-		double reactions[DIM_Y][DIM_X][DIM_Z];
+		double reactions[DIM_Y][DIM_X][DIM_Z], NCX_mode_vector[DIM_Y][DIM_X][DIM_Z];
 
 		for (int i = 0; i < DIM_X; i++) {
 			for (int j = 0; j < DIM_Y; j++) {
 				for (int k = 0; k < DIM_Z; k++) {
 					tecido->update_parameters(i, j , k);
 					
-					reaction_value = Na_Ca_exchanger(tecido->getId(i, j, k));
+					reaction_value = Na_Ca_exchanger(tecido->getId(i, j, k), &NCX_mode);
 					reactions[j][i][k] = reaction_value;
+					NCX_mode_vector[j][i][k] = NCX_mode;
 
 					alfa_0 += reaction_value;
 				}
@@ -1120,11 +1151,12 @@ public:
 						}
 						if (sum_down < alfa_0 * r2) {
 							//cout << sum_upper << " " << alfa_0 * r2 << " " << sum_down << endl;
-							retorno[0] = 1;
+							retorno[0] = NCX_mode_vector[j][i][k];
 							retorno[1] = i;
 							retorno[2] = j;
 							retorno[3] = k;
 							retorno[4] = tau;
+							//cout << tau << endl;
 
 							return retorno;
 						}
@@ -1179,8 +1211,8 @@ void simulation(int destination, double frequency, string topologie) {
 	cout << "Connections per cell: " << nConnections << endl;
 	vector<double> choice(5);
 	vector<int> connections(nConnections), qtd_reactions(8 + QTD_DIFFUSIONS * (nConnections * 3));
-	double simulation_time = 200, current_time = 0, tau_calcium, tau_sodium_inter, tau_sodium_extra, tau_calcium_extra, tau_max=100000;
-	double current_time_calcium = 0, current_time_sodium_inter = 0, current_time_sodium_extra = 0, current_time_calcium_extra = 0;
+	double simulation_time = 200, current_time = 0, tau_calcium, tau_sodium_inter, tau_sodium_extra, tau_calcium_extra, tau_NCX, tau_max=100000;
+	double current_time_calcium = 0, current_time_sodium_inter = 0, current_time_sodium_extra = 0, current_time_calcium_extra = 0, current_time_NCX = 0;
 	int reaction, int_time = 0;
 	bool diffusion_error = false, tau_flag = false;
 
@@ -1233,16 +1265,15 @@ void simulation(int destination, double frequency, string topologie) {
 		}
 		//cout << "Chosen reaction: " << reaction << endl;
 		tau_flag = false;
-		current_time_calcium = 0; current_time_sodium_inter = 0; current_time_sodium_extra = 0; current_time_calcium_extra = 0;
+		current_time_calcium = 0; current_time_sodium_inter = 0; current_time_sodium_extra = 0; current_time_calcium_extra = 0; current_time_NCX = 0;
 		tau_max = 100000;
 		do
 		{	
 			// CHOICE OF THE REACTIONS
-		
 			choice = gillespie.calciumReactions();
 
 			tau_calcium = choice[4];
-
+			//cout << setprecision(5) << "Tau_calcium = " << tau_calcium << endl;
 			// Print Tissue
 			// tecido.printTissue();
 			// cout << endl;
@@ -1339,7 +1370,7 @@ void simulation(int destination, double frequency, string topologie) {
 			choice = gillespie.sodiumInter();
 			tau_sodium_inter = choice[4];
 			reaction = choice[0];
-
+			//cout << setprecision(5) << "Tau_sodium_inter = " << tau_sodium_inter << endl;
 			//qtd_reactions[reaction - 1]++;
 			if (current_time_sodium_inter<tau_max) {
 				for (int conn = 0; conn < nConnections; conn++) {
@@ -1364,7 +1395,7 @@ void simulation(int destination, double frequency, string topologie) {
 			choice = gillespie.sodiumExtra();
 			tau_sodium_extra = choice[4];
 			reaction = choice[0];
-
+			//cout  << setprecision(5) << "Tau_sodium_extra = " << tau_sodium_extra << endl;
 			//qtd_reactions[reaction - 1]++;
 			if (current_time_sodium_extra<tau_max) {
 				for (int conn = 0; conn < nConnections; conn++) {
@@ -1389,7 +1420,7 @@ void simulation(int destination, double frequency, string topologie) {
 			choice = gillespie.calciumExtra();
 			tau_calcium_extra = choice[4];
 			reaction = choice[0];
-
+			//cout << setprecision(5) << "Tau_calcium_extra = " << tau_calcium_extra << endl;
 			//qtd_reactions[reaction - 1]++;
 			if (current_time_calcium_extra<tau_max) {
 				for (int conn = 0; conn < nConnections; conn++) {
@@ -1409,12 +1440,33 @@ void simulation(int destination, double frequency, string topologie) {
 				/* DIFFUSION ERROR => NO INCREMENT TIME */
 				if (diffusion_error) current_time_calcium_extra -= (tau_calcium_extra);
 			}
+
+			// NCX - Reaction
+			choice = gillespie.NCX_reaction();
+			tau_NCX = choice[4];
+			reaction = choice[0];
+			//cout << setprecision(5) << "Tau_NCX = " << tau_NCX << endl;
+			if (current_time_NCX<tau_max) {
+				if (reaction == 1) { // Modo Reverso
+					tecido.accumulate(choice[1], choice[2], choice[3], "Na_o", 3*ALPHA);
+					tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", -3*ALPHA);
+					tecido.accumulate(choice[1], choice[2], choice[3], "C", ALPHA);
+					tecido.accumulate(choice[1], choice[2], choice[3], "C_o", -ALPHA);
+				} else if (reaction == 2) { // Modo Direto
+					tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", 3*ALPHA);
+					tecido.accumulate(choice[1], choice[2], choice[3], "Na_o", -3*ALPHA);
+					tecido.accumulate(choice[1], choice[2], choice[3], "C_o", ALPHA);
+					tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
+				}
+				current_time_NCX += tau_NCX;
+			}
+			//cout << setprecision(5) << "C = " << tecido.get(choice[1], choice[2], choice[3], "C") << endl;
 			if (tau_flag==false){
-				tau_max = max(tau_calcium, max(tau_calcium_extra, max(tau_sodium_inter, tau_sodium_extra)));
+				tau_max = max(tau_calcium, max(tau_calcium_extra, max(tau_sodium_inter, max(tau_sodium_extra,tau_NCX))));
 				tau_flag=true;
 			}
-
-		} while (current_time_calcium<tau_max || current_time_calcium_extra<tau_max || current_time_sodium_inter<tau_max || current_time_sodium_extra<tau_max);
+			//cout << setprecision(5) << "Tau_MAX = " << tau_max << endl;
+		} while (current_time_calcium<tau_max || current_time_calcium_extra<tau_max || current_time_sodium_inter<tau_max || current_time_sodium_extra<tau_max || current_time_NCX<tau_max);
 
 		current_time += tau_max*1000;
 
@@ -1531,7 +1583,6 @@ int main(){
 	int destination = 1;
 	double frequency = 0.00000001;
 	string topologie = "RD";
-	
 	//for (int dest = 1; dest <= 1; dest++) {
 	//	simulation(dest, frequency, topologie);
 	//}
