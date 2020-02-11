@@ -13,6 +13,7 @@ using namespace std;
 #define R 8.314472 // [N.m/(g.mol.K)] (Gas constant) Zaki Ahmad, in Principles of Corrosion Engineering and Corrosion Control, 2006
 #define T 298.16 // [K] Ambient temperature
 #define n_NA 1 // Sodium charge
+#define n_CA 2 // Calcium charge
 #define F 96485.3329 // [s.A/mol] Faraday's constant
 
 double conc, tx_conc, diameter_cell = 5, deltaamp;
@@ -84,7 +85,7 @@ public:
 		//double K_i = 0; parameters["K_i"] = K_i; // A definir
 		//double K_o = 0; parameters["K_o"] = K_o; // A definir
 		double V_NCX = -SCALE*80; parameters["V_NCX"] = V_NCX; //Verify this value later - Koenigsberger, 2004-->-40/Kirischuk 2012-->-80 [mV]
-		double Vm = SCALE*R*T/(n_NA*F)*log(Na_o/Na_i)*1000; parameters["Vm"] = Vm; // [mV] VERIFICAR!!!! Nernst Eq./Eq (3) from  Koenigsberger, 2004
+		double Vm = SCALE*R*T/(n_CA*F)*log(C_o/C)*1000; parameters["Vm"] = Vm; // [mV] VERIFICAR!!!! Nernst Eq./Eq (3) from  Koenigsberger, 2004
 		double DDC_Na = -SCALE*115000; parameters["DDC_Na"] = DDC_Na; // Kirischuk 2012 [uM]
 		double G_NCX = SCALE*0.00316; parameters["G_NCX"] = G_NCX; // Koenigsberger, 2004 [uM.m.V^(-1).S^(-1)]
 		double C_NCX = SCALE*0.5; parameters["C_NCX"] = C_NCX; // Barros, 2015 [uM]
@@ -171,7 +172,7 @@ public:
 	}
 	
 	void update_parameters(int x, int y, int z) {
-		tecido[y][x][z].parameters["Vm"] = (R*T/n_NA*F)*log(tecido[y][x][z].parameters["Na_o"]/tecido[y][x][z].parameters["Na_i"])*1000; // ALTERAR!!!
+		tecido[y][x][z].parameters["Vm"] = (R*T/n_CA*F)*log(tecido[y][x][z].parameters["C_o"]/tecido[y][x][z].parameters["C"])*1000; // ALTERAR!!!
 	}
 
 	void accumulate(int id, string parameter, double add) {
@@ -596,7 +597,7 @@ public:
 			J_NCX = Allo*Delta_E_num/Delta_E_denom;
 			//dCa_dt = J_NCX - (tecido->get(id, "C_rest")-tecido->get(id, "C"))/tecido->get(id, "tau_Ca");
 
-			cout << setprecision(16) << "Reverse Mode -- J_NCX = " << J_NCX << endl;*/
+			*///cout << setprecision(16) << "Reverse Mode -- J_NCX = " << J_NCX << endl;
 			//tecido->get(id, "vin");
 			//cout << "Reverse Mode = " << tecido->get(id, "Vm") << endl;
 			return J_NCX;
@@ -616,7 +617,7 @@ public:
 			J_NCX = Allo*Delta_E_num/Delta_E_denom;
 			//dCa_dt = J_NCX + (tecido->get(id, "C_rest")-tecido->get(id, "C"))/tecido->get(id, "tau_Ca");
 
-			cout << setprecision(16) << "Forward Mode -- J_NCX = " << J_NCX << endl;*/
+			*///cout << setprecision(16) << "Forward Mode -- J_NCX = " << J_NCX << endl;
 			//tecido->get(id, "ko") * tecido->get(id, "C");
 			//cout << "Forward Mode = " << tecido->get(id, "Vm") << endl;
 			return J_NCX;
@@ -1111,10 +1112,10 @@ public:
 					//tecido->update_parameters(i, j , k);
 					
 					reaction_value = Na_Ca_exchanger(tecido->getId(i, j, k), &NCX_mode);
-					reactions[j][i][k] = reaction_value;
+					reactions[j][i][k] = abs(reaction_value);
 					NCX_mode_vector[j][i][k] = NCX_mode;
 
-					alfa_0 += reaction_value;
+					alfa_0 += abs(reaction_value);
 				}
 			}
 		}
