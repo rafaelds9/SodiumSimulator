@@ -1509,15 +1509,15 @@ void simulation(int destination, double frequency, string topologie) {
 
 				if(current_time>=210){
 					current_time -= tau_max*1000;
-					tau_max = 0;
+					tau_max = 100000;
 					tau_flag = false;					
 				}
 			}
-			if (current_time>=200 && current_time<210) break;
+			//if (current_time>=200 && current_time<210) break;
 			//cout << setprecision(5) << "Tau_MAX = " << tau_max << endl;
-			//|| current_time_calcium_extra<tau_max || current_time_sodium_inter<tau_max || current_time_sodium_extra<tau_max 
+			//|| current_time_calcium_extra<tau_max || current_time_sodium_extra<tau_max 
 
-		} while (current_time_calcium<tau_max || current_time_NCX<tau_max);
+		} while (current_time_calcium<tau_max || current_time_NCX<tau_max || current_time_sodium_inter<tau_max);
 
 		// cout << "Tau: " << max(tau_calcium, max(tau_sodium_inter, max(tau_sodium_extra, tau_calcium_extra))) << endl;
 		// cout << "Tau: " << fixed << setprecision(10) << tau_calcium << " " << tau_sodium_inter << " " << tau_sodium_extra << " " << tau_calcium_extra << endl;
@@ -1654,7 +1654,7 @@ void simulation(int destination, double frequency, string topologie) {
 /* MAIN */
 int main(){
 
-	int destination = 6;
+	int destination = 4;
 	double frequency = 0.6; // Walisson
 	string topologie = "RD";
 	//for (int dest = 1; dest <= 1; dest++) {
