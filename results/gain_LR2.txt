@@ -1,2 +1,0 @@
-RD | Rx = 2; Freq = 0.6 Hz | Gain = -0.401172
-RD | Rx = 3; Freq = 0.6 Hz | Gain = 0.561159

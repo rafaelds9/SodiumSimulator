@@ -2,9 +2,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-#DIM_X = 5 #Pegar com base no header
-#DIM_Y = 3
-
+#DIM_X = 15 #Pegar com base no header
+#DIM_Y = 5
+VMAX = 2.1
+VMIN = 0
 
 dataCa = pd.read_csv("temp/data.txt")
 
@@ -39,22 +40,26 @@ for selected_line in range(0, dataCa.shape[0]):
 
 
     if selected_line == 0:
-        plt.title("Initial State - Sodium:")
-        p = plt.imshow(npdataCa, cmap = 'hot', vmax = 20000, vmin = 15000)
+        #plt.title("Initial State - Calcium:")
+        p = plt.imshow(npdataCa, cmap = 'hot', vmax = VMAX, vmin = VMIN)
         plt.colorbar(p)
+        plt.ylabel("x axis (#cells)")
+        plt.xlabel("y axis (#cells)")
         plt.xticks(np.arange(0, DIM_X))
         plt.yticks(np.arange(0, DIM_Y))
 
         print("\nTime", selected_line)
         print("\nInitial state of the tissue. Close the plot window to proceed.\n")
         plt.show()
-        p = plt.imshow(npdataCa, cmap = 'hot', vmax = 20000, vmin = 15000)
+        p = plt.imshow(npdataCa, cmap = 'hot', vmax = VMAX, vmin = VMIN)
         plt.colorbar(p)
+        plt.ylabel("x axis (#cells)")
+        plt.xlabel("y axis (#cells)")
         plt.xticks(np.arange(0, DIM_X))
         plt.yticks(np.arange(0, DIM_Y))
         fig = plt.gcf()
         plt.clim()   # clamp the color limits
-        plt.title("Sodium diffusion on the tissue")
+        #plt.title("Calcium diffusion on the tissue")
     else:
         p.set_data(npdataCa)
         print("\nTime", selected_line)
