@@ -8,40 +8,60 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
-data = pd.read_csv('results/gain.csv')
+data = pd.read_csv('temp/cdata.csv')
 data.head()
 
-#************************ PLOTLY ************************
+simulation_time = 200
 
-x = [1, 2, 3, 4, 5, 6]
+time = data['time'].values
+t = np.linspace(0, simulation_time, len(time))
+
+c_tx = data['ci_tx'].values
+c_rx = data['ci_rx'].values
+co_tx = data['co_tx'].values
+co_rx = data['co_rx'].values
+
+#************************ PLOTLY ************************
+layer = 0.001
+x = t
 x_rev = x[::-1]
 
-# NCX+Ca
-y1 = data['NCX+Ca'].values
+# Concetração de Ca intra no tx
+y1 = c_tx
 y1_upper = []
 y1_lower = []
 for i in y1:
-    y1_upper.append(i+1)
-    y1_lower.append(i-1)
+    y1_upper.append(i+layer)
+    y1_lower.append(i-layer)
 y1_lower = y1_lower[::-1]
 
-# Ca
-y2 = data['Ca'].values
+# Concetração de Ca intra no rx
+y2 = c_rx
 y2_upper = []
 y2_lower = []
 for i in y2:
-    y2_upper.append(i+1)
-    y2_lower.append(i-1)
+    y2_upper.append(i+layer)
+    y2_lower.append(i-layer)
 y2_lower = y2_lower[::-1]
 
-# NCX+Ca+Na
-y3 = data['NCX+Ca+Na'].values
+# Concetração de Ca extra no tx
+y3 = co_tx
 y3_upper = []
 y3_lower = []
 for i in y3:
-    y3_upper.append(i+1)
-    y3_lower.append(i-1)
+    y3_upper.append(i+layer)
+    y3_lower.append(i-layer)
 y3_lower = y3_lower[::-1]
+
+# Concetração de Ca extra no rx
+y4 = co_rx
+y4_upper = []
+y4_lower = []
+for i in y4:
+    y4_upper.append(i+layer)
+    y4_lower.append(i-layer)
+y4_lower = y4_lower[::-1]
+
 
 fig = go.Figure()
 
@@ -49,52 +69,57 @@ fig.add_trace(go.Scatter(
     x=x+x_rev,
     y=y1_upper+y1_lower,
     fill='toself',
-    fillcolor='rgba(0,100,80,0.2)',
+    fillcolor='rgba(0,0,255,0.2)',
     line_color='rgba(255,255,255,0)',
     showlegend=False,
-    name='NCX + Ca inter',
+    name='tx: [Ca2+]i',
 ))
 fig.add_trace(go.Scatter(
     x=x+x_rev,
     y=y2_upper+y2_lower,
     fill='toself',
-    fillcolor='rgba(0,176,246,0.2)',
+    fillcolor='rgba(0,0,0,0.2)',
     line_color='rgba(255,255,255,0)',
-    name='Ca inter',
+    name='rx: [Ca2+]i',
     showlegend=False,
 ))
-fig.add_trace(go.Scatter(
-    x=x+x_rev,
-    y=y3_upper+y3_lower,
-    fill='toself',
-    fillcolor='rgba(240,52,52,0.2)',
-    line_color='rgba(255,255,255,0)',
-    showlegend=False,
-    name='NCX + Ca + Na',
-))
+# fig.add_trace(go.Scatter(
+#     x=x+x_rev,
+#     y=y3_upper+y3_lower,
+#     fill='toself',
+#     fillcolor='rgba(240,52,52,0.2)',
+#     line_color='rgba(255,255,255,0)',
+#     showlegend=False,
+#     name='NCX + Ca + Na',
+# ))
 fig.add_trace(go.Scatter(
     x=x, y=y1,
-    line_color='rgb(0,100,80)',
-    name='NCX + Ca',
+    line_color='rgb(0,0,255)',
+    name='tx: [Ca2+]i',
 ))
 fig.add_trace(go.Scatter(
     x=x, y=y2,
-    line_color='rgb(0,176,246)',
-    name='Ca inter',
+    line_color='rgb(0,0,0)',
+    name='rx: [Ca2+]i',
 ))
-fig.add_trace(go.Scatter(
-    x=x, y=y3,
-    line_color='rgb(240,52,52)',
-    name='NCX + Ca + Na',
-))
+# fig.add_trace(go.Scatter(
+#     x=x, y=y3,
+#     line_color='rgb(102,51,0)',
+#     name='tx: [Ca2+]o',
+# ))
+# fig.add_trace(go.Scatter(
+#     x=x, y=y4,
+#     line_color='rgb(102,0,102)',
+#     name='rx: [Ca2+]o',
+# ))
 
 # Edit the layout
-fig.update_layout( xaxis_title='Range (#cells)',
-                   yaxis_title='Gain (dB)',
-                   legend=dict(x=.75, y=0.9))
+fig.update_layout( xaxis_title='Simulation time (s)',
+                   yaxis_title='Concentration (uM)',
+                   legend=dict(x=.5, y=1.1))
 
 
-fig.update_traces(mode='lines+markers')
+fig.update_traces(mode='lines')
 fig.show()
 
 # fig = go.Figure(data=data, layout=layout)
